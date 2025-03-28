@@ -83,7 +83,8 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
 
 @user_router.callback_query(F.data == "buy")
 async def buy_callback(call: CallbackQuery, state: FSMContext):
-    await call.message.edit_text("Введите email для получения чека: ")
+    await call.message.delete()
+    await call.message.answer("Введите email для получения чека: ")
     await state.set_state(PaymentStates.email)
 
 
