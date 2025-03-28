@@ -62,7 +62,7 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
         deeplink = await repo.deeplink.get_deeplink_by_id(int(data.get("deeplink")))
         deeplink_target = deeplink.target
     await state.clear()
-    await call.message.edit_text(f"Бот Евгения Пантела ({deeplink_target})", reply_markup=start_keyboard())
+    await call.message.edit_text(f"Бот Евгения Пантела", reply_markup=start_keyboard())
 
 
 @user_router.callback_query(F.data == "buy")
