@@ -13,6 +13,10 @@ from tgbot.utils.payment_utils import Payment
 user_router = Router()
 
 
+@user_router.message(F.photo)
+async def photo(message: Message):
+    print(message.photo[-1].file_id)
+
 @user_router.message(CommandStart(deep_link=True))
 async def user_deeplink(message: Message, command: CommandObject, state: FSMContext, config: Config):
     await state.update_data(deeplink=command.args)
@@ -38,7 +42,10 @@ async def user_start(message: Message, config: Config):
     repo = await get_repo(config)
     user = await repo.users.get_user_by_id(message.from_user.id)
     if user:
-        await message.answer("Бот Евгения Пантела", reply_markup=start_keyboard())
+        text = ('Доступ к каналу "Первый шаг"\n',
+                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
+                'Цена - 2.490 рублей')
+        await message.answer("", reply_markup=start_keyboard())
         return
     text = (
         f"При использовании бота вы соглашаетесь с "
