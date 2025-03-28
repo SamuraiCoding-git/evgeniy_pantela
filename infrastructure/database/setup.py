@@ -1,20 +1,23 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import sessionmaker
 
+from infrastructure.database.models import Base
 from tgbot.config import DbConfig
+from typing import Callable, AsyncContextManager
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 
-def create_engine(db: DbConfig, echo=False):
+async def create_session_pool(db: DbConfig, echo=False) -> Callable[[], AsyncContextManager[AsyncSession]]:
     engine = create_async_engine(
         db.construct_sqlalchemy_url(),
         query_cache_size=1200,
-        pool_size=20,
+        pool_size=10,
         max_overflow=200,
         future=True,
         echo=echo,
     )
-    return engine
 
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all, checkfirst=True)
 
-def create_session_pool(engine):
-    session_pool = async_sessionmaker(bind=engine, expire_on_commit=False)
+    session_pool = sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)
     return session_pool
