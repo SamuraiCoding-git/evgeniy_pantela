@@ -177,4 +177,4 @@ async def back_callback(call: CallbackQuery, config: Config):
     )
     await call.message.edit_media(
         media=media,
-        reply_markup=buy_keyboard())
+        reply_markup=start_keyboard())
