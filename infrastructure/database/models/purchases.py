@@ -7,7 +7,7 @@ from .base import Base, TimestampMixin, TableNameMixin
 class Purchase(Base, TimestampMixin, TableNameMixin):
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True,
                                     autoincrement=True,
-                                    default=Sequence('purchase_id_seq', start=50))
+                                    default=Sequence('purchase_id_seq', start=75))
     payment_id: Mapped[int] = mapped_column(BIGINT, nullable=True)
     user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey('users.id'), nullable=False)
     product_id: Mapped[int] = mapped_column(BIGINT, ForeignKey('products.id'), nullable=False)
