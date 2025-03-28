@@ -108,7 +108,7 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
     repo = await get_repo(config)
     purchase = await repo.purchases.get_purchase_by_user(call.message.chat.id)
     if purchase.is_paid:
-        await call.answer("Оплата прошла")
+        await call.answer("Оплата прошла", show_alert=True)
         return
     payment = Payment(
         config.payment.terminal_key,
@@ -116,7 +116,7 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
     )
     status = payment.get_payment_status(str(purchase.payment_id))
     if status:
-        await call.answer("Оплата прошла")
+        await call.answer("Оплата прошла", show_alert=True)
         text = ("Оплата",
                 f"{call.message.chat.id} {'@' + call.message.chat.username if call.message.chat.username else ''}",
                 f"{purchase.amount}₽"
@@ -136,7 +136,7 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
                                   reply_markup=enter_keyboard(link.invite_link))
 
     else:
-        await call.answer("Оплата не прошла")
+        await call.answer("Оплата не прошла", show_alert=True)
 
 
 @user_router.callback_query(F.data == "about")
