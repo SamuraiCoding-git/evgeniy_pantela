@@ -115,7 +115,7 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
         config.payment.password
     )
     status = payment.get_payment_status(str(purchase.payment_id))
-    if status:
+    if not status:
         await call.answer("Оплата прошла", show_alert=True)
         text = ("Оплата",
                 f"{call.message.chat.id} {'@' + call.message.chat.username if call.message.chat.username else ''}",
