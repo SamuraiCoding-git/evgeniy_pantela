@@ -84,7 +84,7 @@ async def payment_email(message: Message, state: FSMContext, config: Config):
         purchase = await repo.purchases.create_purchase(
             message.from_user.id,
             1,
-            2500
+            2490
         )
         product = await repo.products.get_product_by_id(product_id=1)
         payment = Payment(
