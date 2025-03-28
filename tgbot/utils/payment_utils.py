@@ -106,4 +106,5 @@ class Payment:
     @property
     def get_url(self):
         print(self.payment_data)
-        return self.payment_data['PaymentURL']
+        return "https://google.com/"
+        # return self.payment_data['PaymentURL']
