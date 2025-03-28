@@ -81,12 +81,12 @@ async def payment_email(message: Message, state: FSMContext, config: Config):
     print(text)
     purchase = await repo.purchases.get_purchase_by_user(message.from_user.id)
     if not purchase:
+        product = await repo.products.get_product_by_id(product_id=1)
         purchase = await repo.purchases.create_purchase(
             message.from_user.id,
             1,
-            2490
+            int(product.price)
         )
-        product = await repo.products.get_product_by_id(product_id=1)
         payment = Payment(
             config.payment.terminal_key,
             config.payment.password
