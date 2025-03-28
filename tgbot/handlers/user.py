@@ -1,7 +1,7 @@
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InputMedia, InputMediaPhoto
 from aiogram.utils.markdown import hlink
 
 from tgbot.config import Config
@@ -11,11 +11,6 @@ from tgbot.utils.db_utils import get_repo
 from tgbot.utils.payment_utils import Payment
 
 user_router = Router()
-
-
-@user_router.message(F.photo)
-async def photo(message: Message):
-    print(message.photo[-1].file_id)
 
 @user_router.message(CommandStart(deep_link=True))
 async def user_deeplink(message: Message, command: CommandObject, state: FSMContext, config: Config):
@@ -31,10 +26,20 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
         await message.answer(text, reply_markup=offer_keyboard())
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
+        text = ('Доступ к каналу "Первый шаг"\n',
+                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
+                'Цена - 2.490 рублей')
+        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
         if deeplink.source != "tripwire":
-            await message.answer(f"Бот Евгения Пантела ({deeplink.target})", reply_markup=start_keyboard())
+            await message.answer_photo(
+                photo=photo,
+                caption="\n".join(text),
+                reply_markup=start_keyboard())
         else:
-            await message.answer("Бот Евгения Пантела", reply_markup=start_keyboard())
+            await message.answer_photo(
+                photo=photo,
+                caption="\n".join(text),
+                reply_markup=start_keyboard())
 
 
 @user_router.message(CommandStart())
@@ -45,7 +50,11 @@ async def user_start(message: Message, config: Config):
         text = ('Доступ к каналу "Первый шаг"\n',
                 'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
                 'Цена - 2.490 рублей')
-        await message.answer("", reply_markup=start_keyboard())
+        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
+        await message.answer_photo(
+            photo=photo,
+            caption="\n".join(text),
+            reply_markup=start_keyboard())
         return
     text = (
         f"При использовании бота вы соглашаетесь с "
@@ -82,10 +91,8 @@ async def buy_callback(call: CallbackQuery, state: FSMContext):
 async def payment_email(message: Message, state: FSMContext, config: Config):
     repo = await get_repo(config)
     tripwire = await repo.products.get_product_by_id(product_id=1)
-    print(tripwire.description)
     description = str(tripwire.description).replace('+br+', '\n')
     text = f"{tripwire.name}\n\n{description}"
-    print(text)
     purchase = await repo.purchases.get_purchase_by_user(message.from_user.id)
     if not purchase:
         product = await repo.products.get_product_by_id(product_id=1)
@@ -148,10 +155,15 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
 
 @user_router.callback_query(F.data == "about")
 async def about_callback(call: CallbackQuery, config: Config):
-    repo = await get_repo(config)
-    tripwire = await repo.products.get_product_by_id(product_id=1)
-    text = (f"{tripwire.info}\n",)
-    await call.message.edit_text("\n".join(text), reply_markup=buy_keyboard())
+    photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
+    text = "Что внутри?\n\nВидео уроки по следующим темам:\n\n1. Основные ХТТП методы\n2. Что такое Рест Апи?\n3. Что такое Git\n4. Что такое реляционная База Данных \n5. Работа с БД\n\n\nВместе пишем проекты:\n\n1. Создаем игру \"камень, ножницы, бумага\" с работающим сайтом\n2. Создаем генератор случайных цитат (CRUD операции)\n3. Делаем стену из вконтакте"
+    media = InputMediaPhoto(
+        media=photo,
+        caption=text
+    )
+    await call.message.edit_media(
+        media=media,
+        reply_markup=buy_keyboard())
 
 @user_router.callback_query(F.data == "back")
 async def back_callback(call: CallbackQuery, config: Config):
