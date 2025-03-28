@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-from tgbot.keyboards.callback_data import SourceData, TargetData
+from tgbot.keyboards.callback_data import SourceData, TargetData, AcceptCreditData
 
 
 def offer_keyboard():
@@ -95,6 +95,17 @@ def source_keyboard():
     ])
     return keyboard
 
+def payment_method_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="325₽ в месяц", callback_data="credit")
+        ],
+        [
+            InlineKeyboardButton(text="2490₽ ЕДИНОРАЗОВО", callback_data="onetime")
+        ]
+    ])
+    return keyboard
+
 def target_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -103,6 +114,32 @@ def target_keyboard():
         ],
         [
             InlineKeyboardButton(text="⏪ Назад", callback_data="admin_back")
+        ]
+    ])
+    return keyboard
+
+def credit_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="325₽ в месяц", url="https://link.tinkoff.ru/1tCdbBlTfq0")
+        ],
+        [
+            InlineKeyboardButton(text="Оплатил", callback_data="paid_credit")
+        ]
+    ])
+    return keyboard
+
+def approve_credit(chat_id):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅", callback_data=AcceptCreditData(
+                response=True,
+                chat_id=chat_id
+            ).pack()),
+            InlineKeyboardButton(text="❌", callback_data=AcceptCreditData(
+                response=False,
+                chat_id=chat_id
+            ).pack())
         ]
     ])
     return keyboard

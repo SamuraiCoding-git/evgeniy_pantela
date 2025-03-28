@@ -6,3 +6,7 @@ class SourceData(CallbackData, prefix="source"):
 
 class TargetData(CallbackData, prefix="target"):
     target: str
+
+class AcceptCreditData(CallbackData, prefix="accept_credit"):
+    response: bool
+    chat_id: int

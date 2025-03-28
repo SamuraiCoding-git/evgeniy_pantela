@@ -2,11 +2,13 @@ from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InputMedia, InputMediaPhoto
-from aiogram.utils.markdown import hlink, hbold, hitalic
+from aiogram.utils.markdown import hlink, hbold, hitalic, hblockquote
 
 from tgbot.config import Config
-from tgbot.keyboards.inline import start_keyboard, buy_keyboard, offer_keyboard, product_keyboard, enter_keyboard
-from tgbot.misc.states import PaymentStates
+from tgbot.keyboards.callback_data import AcceptCreditData
+from tgbot.keyboards.inline import start_keyboard, buy_keyboard, offer_keyboard, product_keyboard, enter_keyboard, \
+    payment_method_keyboard, credit_keyboard, approve_credit
+from tgbot.misc.states import PaymentStates, CreditStates
 from tgbot.utils.db_utils import get_repo
 from tgbot.utils.payment_utils import Payment
 
@@ -83,10 +85,71 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
     await call.message.edit_text(f"Бот Евгения Пантела", reply_markup=start_keyboard())
 
 
+@user_router.callback_query(F.data == "credit")
+async def credit(call: CallbackQuery):
+    await call.message.delete()
+    await call.message.answer("Оплатить:", reply_markup=credit_keyboard())
+
+@user_router.callback_query(F.data == "paid_credit")
+async def paid_credit(call: CallbackQuery, config: Config, state: FSMContext):
+    await call.message.delete()
+    await call.message.answer("Отправьте скриншот:")
+    await state.set_state(CreditStates.screenshot)
+
+@user_router.message(CreditStates.screenshot)
+async def screenshot(message: Message, config: Config, bot: Bot, state: FSMContext):
+    if not message.photo:
+        await message.answer("Отправь фото:")
+        return
+    for admin in config.tg_bot.admin_ids:
+        await bot.send_photo(
+            chat_id=admin,
+            photo=message.photo[-1].file_id,
+            reply_markup=approve_credit(message.from_user.id)
+        )
+    await message.answer("Скриншот направлен администратору!")
+    await state.clear()
+
+@user_router.callback_query(AcceptCreditData.filter())
+async def accept_credit(call: CallbackQuery, config: Config, state: FSMContext, callback_data: AcceptCreditData, bot: Bot):
+    response = callback_data.response
+    await call.message.answer("Ответ направлен пользователю")
+    if response:
+        repo = await get_repo(config)
+        link = await bot.create_chat_invite_link(
+            config.tg_bot.channel_id,
+            name=str(call.message.chat.id),
+            member_limit=1
+        )
+        await bot.send_message(
+            chat_id=callback_data.chat_id,
+            text="Ссылка на канал: ",
+                    reply_markup=enter_keyboard(link.invite_link))
+        product = await repo.products.get_product_by_id(product_id=1)
+        purchase = await repo.purchases.create_purchase(
+            callback_data.chat_id,
+            1,
+            int(product.price)
+        )
+        await repo.purchases.toggle_is_paid(purchase.id)
+    else:
+        await bot.send_message(
+            chat_id=callback_data.chat_id,
+            text="Не оплачено")
+
+
+@user_router.callback_query(F.data == "onetime")
+async def onetime(call: CallbackQuery, state: FSMContext):
+    await call.message.delete()
+    await call.message.answer("Введите email для получения чека:")
+    await state.set_state(PaymentStates.email)
+
 @user_router.callback_query(F.data == "buy")
 async def buy_callback(call: CallbackQuery, state: FSMContext):
     await call.message.delete()
-    await call.message.answer("Введите email для получения чека: ")
+    text = ("Выберите способ оплаты:\n",
+            "Доступ выдается навсегда")
+    await call.message.answer("\n".join(text), reply_markup=payment_method_keyboard())
     await state.set_state(PaymentStates.email)
 
 
@@ -159,10 +222,22 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
 @user_router.callback_query(F.data == "about")
 async def about_callback(call: CallbackQuery, config: Config):
     photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-    text = "Что внутри?\n\nВидео уроки по следующим темам:\n\n1. Основные ХТТП методы\n2. Что такое Рест Апи?\n3. Что такое Git\n4. Что такое реляционная База Данных \n5. Работа с БД\n\n\nВместе пишем проекты:\n\n1. Создаем игру \"камень, ножницы, бумага\" с работающим сайтом\n2. Создаем генератор случайных цитат (CRUD операции)\n3. Делаем стену из вконтакте"
+    text = (
+        hbold('Что внутри?\n'),
+        hblockquote('Видео уроки по следующим темам:'),
+        '\n1. Основные ХТТП методы',
+        '2. Что такое Рест Апи?',
+        '3. Что такое Git',
+        '4. Что такое реляционная База Данных',
+        '5. Работа с БД\n',
+        hblockquote('Вместе пишем проекты:\n'),
+        '\n1. Создаем игру "камень, ножницы, бумага" с работающим сайтом',
+        '2. Создаем генератор случайных цитат (CRUD операции)',
+        '3. Делаем стену из ВКонтакте'
+    )
     media = InputMediaPhoto(
         media=photo,
-        caption=text
+        caption="\n".join(text),
     )
     await call.message.edit_media(
         media=media,
