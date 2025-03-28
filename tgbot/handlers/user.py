@@ -72,6 +72,7 @@ async def user_start(message: Message, config: Config):
 async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
     repo = await get_repo(config)
     data = await state.get_data()
+    await call.message.delete()
     await repo.users.get_or_create_user(
         call.message.chat.id,
         call.message.chat.username,
@@ -82,7 +83,15 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
         deeplink = await repo.deeplink.get_deeplink_by_id(int(data.get("deeplink")))
         deeplink_target = deeplink.target
     await state.clear()
-    await call.message.edit_text(f"Бот Евгения Пантела", reply_markup=start_keyboard())
+    text = (hbold('Доступ к каналу "Первый шаг"\n'),
+            'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
+            hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
+            hbold('Доступ выдается навсегда'))
+    photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
+    await call.message.answer_photo(
+        photo=photo,
+        caption="\n".join(text),
+        reply_markup=start_keyboard())
 
 
 @user_router.callback_query(F.data == "credit")
