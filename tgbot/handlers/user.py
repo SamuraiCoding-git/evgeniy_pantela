@@ -76,7 +76,7 @@ async def payment_email(message: Message, state: FSMContext, config: Config):
     repo = await get_repo(config)
     tripwire = await repo.products.get_product_by_id(product_id=1)
     print(tripwire.description)
-    description = str(tripwire.description).replace('|br|', '\n')
+    description = str(tripwire.description).replace('+br+', '\n')
     text = f"{tripwire.name}\n\n{description}"
     print(text)
     purchase = await repo.purchases.get_purchase_by_user(message.from_user.id)
