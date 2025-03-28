@@ -168,10 +168,12 @@ async def about_callback(call: CallbackQuery, config: Config):
 @user_router.callback_query(F.data == "back")
 async def back_callback(call: CallbackQuery, config: Config):
     photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-    text = "Что внутри?\n\nВидео уроки по следующим темам:\n\n1. Основные ХТТП методы\n2. Что такое Рест Апи?\n3. Что такое Git\n4. Что такое реляционная База Данных \n5. Работа с БД\n\n\nВместе пишем проекты:\n\n1. Создаем игру \"камень, ножницы, бумага\" с работающим сайтом\n2. Создаем генератор случайных цитат (CRUD операции)\n3. Делаем стену из вконтакте"
+    text = ('Доступ к каналу "Первый шаг"\n',
+            'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
+            'Цена - 2.490 рублей')
     media = InputMediaPhoto(
         media=photo,
-        caption=text
+        caption="\n".join(text)
     )
     await call.message.edit_media(
         media=media,
