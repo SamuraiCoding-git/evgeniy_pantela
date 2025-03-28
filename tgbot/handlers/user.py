@@ -98,7 +98,7 @@ async def payment_email(message: Message, state: FSMContext, config: Config):
         payment_url = payment.get_url
     else:
         payment_url = purchase.link
-    await message.answer("\n".join(text), reply_markup=product_keyboard(payment_url))
+    await message.answer(text, reply_markup=product_keyboard(payment_url))
 
 @user_router.callback_query(F.data == "check_payment")
 async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
