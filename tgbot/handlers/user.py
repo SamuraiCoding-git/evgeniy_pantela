@@ -2,7 +2,7 @@ from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InputMedia, InputMediaPhoto
-from aiogram.utils.markdown import hlink
+from aiogram.utils.markdown import hlink, hbold, hitalic
 
 from tgbot.config import Config
 from tgbot.keyboards.inline import start_keyboard, buy_keyboard, offer_keyboard, product_keyboard, enter_keyboard
@@ -26,9 +26,10 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
         await message.answer(text, reply_markup=offer_keyboard())
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
-        text = ('Доступ к каналу "Первый шаг"\n',
+        text = (hbold('Доступ к каналу "Первый шаг"\n'),
                 'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-                'Цена - 2.490 рублей')
+                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
+                hbold('Доступ выдается навсегда'))
         photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
         if deeplink.source != "tripwire":
             await message.answer_photo(
@@ -47,9 +48,10 @@ async def user_start(message: Message, config: Config):
     repo = await get_repo(config)
     user = await repo.users.get_user_by_id(message.from_user.id)
     if user:
-        text = ('Доступ к каналу "Первый шаг"\n',
+        text = (hbold('Доступ к каналу "Первый шаг"\n'),
                 'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-                'Цена - 2.490 рублей')
+                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
+                hbold('Доступ выдается навсегда'))
         photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
         await message.answer_photo(
             photo=photo,
@@ -169,9 +171,10 @@ async def about_callback(call: CallbackQuery, config: Config):
 @user_router.callback_query(F.data == "back")
 async def back_callback(call: CallbackQuery, config: Config):
     photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-    text = ('Доступ к каналу "Первый шаг"\n',
+    text = (hbold('Доступ к каналу "Первый шаг"\n'),
             'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-            'Цена - 2.490 рублей')
+            hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
+            hbold('Доступ выдается навсегда'))
     media = InputMediaPhoto(
         media=photo,
         caption="\n".join(text)
