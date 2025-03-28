@@ -75,6 +75,7 @@ async def buy_callback(call: CallbackQuery, state: FSMContext):
 async def payment_email(message: Message, state: FSMContext, config: Config):
     repo = await get_repo(config)
     tripwire = await repo.products.get_product_by_id(product_id=1)
+    print(tripwire.description)
     text = f"{tripwire.name}\n\n{tripwire.description}"
     print(text)
     purchase = await repo.purchases.get_purchase_by_user(message.from_user.id)
