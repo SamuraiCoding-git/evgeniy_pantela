@@ -121,7 +121,7 @@ def target_keyboard():
 def credit_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="325₽ в месяц", url="https://link.tinkoff.ru/1tCdbBlTfq0")
+            InlineKeyboardButton(text="Ссылка на рассрочку", url="https://link.tinkoff.ru/1tCdbBlTfq0")
         ],
         [
             InlineKeyboardButton(text="Оплатил", callback_data="paid_credit")
