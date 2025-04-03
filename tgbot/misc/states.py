@@ -11,3 +11,10 @@ class DeeplinkStates(StatesGroup):
 
 class CreditStates(StatesGroup):
     screenshot = State()
+
+class MailingStates(StatesGroup):
+    message = State()
+    buttons = State()
+
+class GrantAccessStates(StatesGroup):
+    chat_id = State()

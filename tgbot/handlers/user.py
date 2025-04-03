@@ -1,7 +1,7 @@
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, InputMedia, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram.utils.markdown import hlink, hbold, hitalic, hblockquote
 
 from tgbot.config import Config
@@ -38,6 +38,12 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
                 photo=photo,
                 caption="\n".join(text),
                 reply_markup=start_keyboard())
+        elif deeplink.source == "video":
+            video = deeplink.target
+            await message.answer_video(
+                video=video,
+                caption=deeplink.link
+            )
         else:
             await message.answer_photo(
                 photo=photo,
@@ -75,23 +81,31 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
     await call.message.delete()
     await repo.users.get_or_create_user(
         call.message.chat.id,
+        call.message.chat.full_name,
+        call.message.chat.is_premium,
         call.message.chat.username,
-        None if not data.get("deeplink") else int(data.get("deeplink"))
+        None if not data.get("deeplink") else int(data.get("deeplink")),
     )
     deeplink_target = ""
     if data.get("deeplink"):
         deeplink = await repo.deeplink.get_deeplink_by_id(int(data.get("deeplink")))
-        deeplink_target = deeplink.target
-    await state.clear()
-    text = (hbold('Доступ к каналу "Первый шаг"\n'),
-            'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-            hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
-            hbold('Доступ выдается навсегда'))
-    photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-    await call.message.answer_photo(
-        photo=photo,
-        caption="\n".join(text),
-        reply_markup=start_keyboard())
+        if deeplink.source == "video":
+            video = deeplink.target
+            await call.message.answer_video(
+                video=video,
+                caption=deeplink.link
+            )
+    else:
+        await state.clear()
+        text = (hbold('Доступ к каналу "Первый шаг"\n'),
+                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
+                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
+                hbold('Доступ выдается навсегда'))
+        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
+        await call.message.answer_photo(
+            photo=photo,
+            caption="\n".join(text),
+            reply_markup=start_keyboard())
 
 
 @user_router.callback_query(F.data == "credit")

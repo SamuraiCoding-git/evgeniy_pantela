@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-from tgbot.keyboards.callback_data import SourceData, TargetData, AcceptCreditData
+from tgbot.keyboards.callback_data import SourceData, TargetData, AcceptCreditData, AudienceData
 
 
 def offer_keyboard():
@@ -21,7 +21,7 @@ def start_keyboard():
         ],
         [
             InlineKeyboardButton(text="Поддержка", url="https://t.me/pantelam")
-        ],
+        ]
     ])
     return keyboard
 
@@ -43,6 +43,20 @@ def admin_keyboard():
         ],
         [
             InlineKeyboardButton(text="Статистика", callback_data="stats")
+        ],
+        [
+            InlineKeyboardButton(text="Рассылка", callback_data="mailing")
+        ],
+        [
+            InlineKeyboardButton(text="Выдать доступ", callback_data="grant_access")
+        ]
+    ])
+    return keyboard
+
+def statistics_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Таблица", callback_data="table")
         ]
     ])
     return keyboard
@@ -143,3 +157,56 @@ def approve_credit(chat_id):
         ]
     ])
     return keyboard
+
+def mailing_keyboard(is_buttons=False):
+    buttons = [
+        [
+            InlineKeyboardButton(text=f"{'Изменить' if is_buttons else 'Добавить'} кнопки", callback_data="mailing_buttons")
+        ],
+        [
+            InlineKeyboardButton(text="Предпросмотр", callback_data="preview")
+        ],
+        [
+            InlineKeyboardButton(text="Отправить", callback_data="send")
+        ]
+    ]
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+
+def audience_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Всем", callback_data=AudienceData(audience="all").pack())
+        ],
+        [
+            InlineKeyboardButton(text="Купившим", callback_data=AudienceData(audience="bought").pack())
+        ],
+        [
+            InlineKeyboardButton(text="Некупившим", callback_data=AudienceData(audience="nonbought").pack())
+        ]
+    ])
+    return keyboard
+
+def confirm_mailing_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅", callback_data="confirm_mailing"),
+            InlineKeyboardButton(text="❌", callback_data="admin_mailing")
+        ]
+    ])
+    return keyboard
+
+def create_url_keyboard(buttons_data: list, preview=False) -> InlineKeyboardMarkup:
+    keyboard_rows = [
+        [InlineKeyboardButton(text=btn["text"], url=btn["url"])]
+        for btn in buttons_data
+    ]
+
+    if preview:
+        keyboard_rows.append(
+            [InlineKeyboardButton(text="🔙 Назад", callback_data="admin_mailing")]
+        )
+
+    return InlineKeyboardMarkup(inline_keyboard=keyboard_rows)

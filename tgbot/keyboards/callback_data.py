@@ -10,3 +10,6 @@ class TargetData(CallbackData, prefix="target"):
 class AcceptCreditData(CallbackData, prefix="accept_credit"):
     response: bool
     chat_id: int
+
+class AudienceData(CallbackData, prefix="audience"):
+    audience: str

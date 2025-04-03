@@ -95,12 +95,12 @@ class Payment:
         data['Token'] = self._generate_token(data)
         response = self._send_post_request("/v2/GetState", data)
 
+        print(response)
+
         # Анализируем ответ API
         if response.get("Success") and response.get("ErrorCode") == "0":
-            payments = response.get("Payments", [])
-            if payments and isinstance(payments, list):
-                payment_status = payments[0].get("Status", "")
-                return payment_status == "CONFIRMED"
+            payment_status = response.get("Status", "")
+            return payment_status == "CONFIRMED"
         return False
 
     @property
