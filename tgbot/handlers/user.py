@@ -79,7 +79,7 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
     await repo.users.get_or_create_user(
         call.message.chat.id,
         call.message.chat.full_name,
-        call.message.chat.is_premium,
+        call.message.from_user.is_premium,
         call.message.chat.username,
         None if not data.get("deeplink") else int(data.get("deeplink")),
     )
