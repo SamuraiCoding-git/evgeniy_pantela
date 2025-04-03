@@ -16,6 +16,7 @@ user_router = Router()
 
 @user_router.message(CommandStart(deep_link=True))
 async def user_deeplink(message: Message, command: CommandObject, state: FSMContext, config: Config):
+    print(command.args)
     await state.update_data(deeplink=command.args)
     repo = await get_repo(config)
     user = await repo.users.get_user_by_id(message.from_user.id)
@@ -33,12 +34,7 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
                 hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
                 hbold('Доступ выдается навсегда'))
         photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-        if deeplink.source != "tripwire":
-            await message.answer_photo(
-                photo=photo,
-                caption="\n".join(text),
-                reply_markup=start_keyboard())
-        elif deeplink.source == "video":
+        if deeplink.source == "video":
             video = deeplink.target
             await message.answer_video(
                 video=video,
@@ -48,7 +44,8 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
             await message.answer_photo(
                 photo=photo,
                 caption="\n".join(text),
-                reply_markup=start_keyboard())
+                reply_markup=start_keyboard()
+            )
 
 
 @user_router.message(CommandStart())
@@ -89,11 +86,22 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
     deeplink_target = ""
     if data.get("deeplink"):
         deeplink = await repo.deeplink.get_deeplink_by_id(int(data.get("deeplink")))
+        text = (hbold('Доступ к каналу "Первый шаг"\n'),
+                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
+                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
+                hbold('Доступ выдается навсегда'))
+        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
         if deeplink.source == "video":
             video = deeplink.target
             await call.message.answer_video(
                 video=video,
                 caption=deeplink.link
+            )
+        else:
+            await call.message.answer_photo(
+                photo=photo,
+                caption="\n".join(text),
+                reply_markup=start_keyboard()
             )
     else:
         await state.clear()
