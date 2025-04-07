@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats
 
 from infrastructure.database.setup import create_session_pool
 from tgbot.config import load_config, Config
@@ -22,8 +22,10 @@ async def on_startup(bot: Bot, admin_ids: list[int]):
 async def set_default_commands(bot):
     await bot.delete_my_commands()
     await bot.set_my_commands([
-        BotCommand(command="start", description="Запустить бота"),
-    ])
+        BotCommand(command="start", description="Запустить бота")
+    ],
+        scope=BotCommandScopeAllPrivateChats()
+    )
 
 def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=None):
     """
