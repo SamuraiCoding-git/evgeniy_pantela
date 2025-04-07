@@ -22,7 +22,6 @@ async def on_startup(bot: Bot, admin_ids: list[int]):
 async def set_default_commands(bot):
     await bot.set_my_commands([
         BotCommand(command="start", description="Запустить бота"),
-        BotCommand(command="help", description="Помощь"),
     ])
 
 def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=None):
