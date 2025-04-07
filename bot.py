@@ -20,6 +20,7 @@ async def on_startup(bot: Bot, admin_ids: list[int]):
 
 
 async def set_default_commands(bot):
+    await bot.delete_my_commands()
     await bot.set_my_commands([
         BotCommand(command="start", description="Запустить бота"),
     ])
