@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
+from aiogram.types import BotCommand
 
 from infrastructure.database.setup import create_session_pool
 from tgbot.config import load_config, Config
@@ -17,6 +18,12 @@ from tgbot.services import broadcaster
 async def on_startup(bot: Bot, admin_ids: list[int]):
     await broadcaster.broadcast(bot, admin_ids, "Бот был запущен!")
 
+
+async def set_default_commands(bot):
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Запустить бота"),
+        BotCommand(command="help", description="Помощь"),
+    ])
 
 def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=None):
     """
@@ -100,6 +107,7 @@ async def main():
 
     await create_session_pool(config.db)
     await on_startup(bot, config.tg_bot.admin_ids)
+    await set_default_commands(bot)
     await dp.start_polling(bot)
 
 
