@@ -256,7 +256,7 @@ async def confirm_mailing(call: CallbackQuery, config: Config, state: FSMContext
                 case "sticker":
                     await call.bot.send_sticker(chat_id=user_id, sticker=file_id)
                 case "video_note":
-                    await call.bot.send_video_note(chat_id=user_id, video_note=file_id)
+                    await call.bot.send_video_note(chat_id=user_id, video_note=file_id, **send_kwargs)
                 case "voice":
                     await call.bot.send_voice(chat_id=user_id, voice=file_id)
                 case _:
