@@ -173,9 +173,8 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
         await message.answer(text, reply_markup=offer_keyboard())
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
-        print(deeplink.scenario)
         scenario_handler = ScenarioHandler(message, state, config)
-        await scenario_handler.handle_scenario(str(json.dumps(deeplink.scenario)))
+        await scenario_handler.handle_scenario(deeplink.scenario)
 
 
 @user_router.message(CommandStart())
