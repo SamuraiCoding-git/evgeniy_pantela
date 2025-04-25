@@ -1,11 +1,49 @@
 {
   "actions": [
     {
-        "action": "send_video",
+        "action": "execute_function",
         "params": {
-          "video": {
-            "id": "BAACAgIAAxkBAAIPLmgLzojYvIUQc7EyL5ctJSh1nRRyAAKhewACn2NhSED6_BnhX0oGNgQ"
-          }
+          "functions": [
+            {
+              "function_name": "lessons.update_user",
+              "params": {
+
+              }
+            }
+          ]
+        }
+    },
+    {
+      "action": "send_video",
+      "params": {
+        "video": {
+          "id": "BAACAgIAAxkBAAIPLmgLzojYvIUQc7EyL5ctJSh1nRRyAAKhewACn2NhSED6_BnhX0oGNgQ"
+        },
+        "keyboard": [
+          [
+            {
+              "type": "execute_function",
+              "text": "Следующий урок",
+              "function_name": "send_video",
+              "params": {
+                "functions": [
+                  {
+                    "function_name": "send_video",
+                    "params": {
+                      "video_id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
+                    }
+                  },
+                  {
+                    "function_name": "lessons.update_lesson_progress",
+                    "params": {
+
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        ]
       }
     },
     {

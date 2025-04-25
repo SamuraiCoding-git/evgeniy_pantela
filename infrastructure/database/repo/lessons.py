@@ -6,11 +6,11 @@ from infrastructure.database.repo.base import BaseRepo
 
 
 class LessonRepo(BaseRepo):
-    async def get_or_create_lesson_progress(self, user_id: int, lesson_number: int) -> Lesson:
+    async def get_or_create_lesson_progress(self, user_id: int) -> Lesson:
         """Получение или создание записи о прогрессе пользователя по урокам"""
         # Проверка, существует ли уже прогресс для данного пользователя и урока
         lesson = await self.session.execute(
-            select(Lesson).filter_by(user_id=user_id, lesson_number=lesson_number)
+            select(Lesson).filter_by(user_id=user_id, lesson_number=1)
         )
         lesson = lesson.scalar_one_or_none()
 
@@ -20,7 +20,7 @@ class LessonRepo(BaseRepo):
         # Если прогресс не найден, создаем новый
         insert_stmt = (
             insert(Lesson)
-            .values(user_id=user_id, lesson_number=lesson_number)
+            .values(user_id=user_id, lesson_number=1)
             .returning(Lesson)
         )
         result = await self.session.execute(insert_stmt)

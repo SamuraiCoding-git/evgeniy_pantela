@@ -3,21 +3,26 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-import asyncio
-import json
 import logging
 
+from aiogram.types import WebAppInfo
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+import logging
+import json
+import asyncio
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from aiogram.types import InlineKeyboardButton, WebAppInfo, InlineKeyboardMarkup, Message, InputMediaPhoto, \
-    InputMediaVideo, URLInputFile, InputMediaAudio
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, InputMediaPhoto, InputMediaVideo, \
+    URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from sqlalchemy.exc import SQLAlchemyError
-
 from tgbot.utils.db_utils import get_repo
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
 
 class ScenarioHandler:
     def __init__(self, message: Message, state: FSMContext, config):
@@ -30,15 +35,8 @@ class ScenarioHandler:
         Основной метод для обработки сценария.
         Преобразует JSON в структуру данных и проигрывает сценарий.
         """
-        scenario_data = scenario  # Теперь это уже объект, переданный в функцию
+        scenario_data = scenario
         await self.play_scenario(scenario_data)
-
-    @staticmethod
-    async def parse_scenario(scenario: str):
-        """
-        Преобразует JSON-сценарий в структуру данных
-        """
-        return json.loads(scenario)
 
     async def play_scenario(self, scenario_data):
         """
@@ -49,13 +47,7 @@ class ScenarioHandler:
             action_type = action.get("action")
             params = action.get("params", {})
 
-            if action_type == "send_text":
-                # Добавляем обработку для send_text
-                await self.send_text(params)
-
-            # Получаем обработчик для действия
             handler_class = self.get_handler(action_type)
-
             if handler_class:
                 handler = handler_class(self.message, params, self.state, self.config)
                 await handler.send()
@@ -63,36 +55,80 @@ class ScenarioHandler:
                 # После отправки сохраняем sent_message
                 sent_message = handler.sent_message
 
-                # Если действие связано с выполнением функции
                 if action_type == "execute_function":
-                    function_path = params.get("function_name")
-                    function_params = params.get("params", {})
-                    await self.execute_function(function_path, function_params)
+                    functions = params.get("functions", [])
+                    for function in functions:
+                        function_name = function.get("function_name")
+                        function_params = function.get("params", {})
+                        await self.execute_function(function_name, function_params)
 
-                # Установка задержки, если указано
                 if "delay" in params:
                     await asyncio.sleep(params["delay"])
 
-                # Обновление клавиатуры, если указано
                 if "update_keyboard" in params:
                     await self.update_keyboard(params["update_keyboard"], sent_message)
             else:
                 logger.warning(f"Unknown action type: {action_type}")
 
-    async def send_text(self, params):
+    async def execute_function(self, function_path: str, params: dict):
         """
-        Отправка текстового сообщения в начале сценария
+        Выполняет несколько функций, переданных в params.
         """
-        text = params.get("text", "Default Text Message")
-        await self.message.answer(text)
+        try:
+            functions = params.get("functions", [])
+
+            # Обработка нескольких функций
+            for function in functions:
+                function_name = function.get("function_name")
+                function_params = function.get("params", {})
+                result = await self._execute_single_function(function_name, function_params)
+                logger.info(f"Executed function '{function_name}' with params: {function_params}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.message.answer(f"Unexpected error: {e}")
+
+    async def _execute_single_function(self, function_name: str, params: dict):
+        """
+        Выполняет одну функцию, используя её имя и параметры.
+        """
+        try:
+            repo_name, func_name = function_name.split(".")
+            repo = await get_repo(self.config)
+
+            repo_func = getattr(repo, repo_name, None)
+            if not repo_func:
+                raise AttributeError(f"Repository '{repo_name}' does not exist.")
+
+            function = getattr(repo_func, func_name, None)
+            if not function:
+                raise AttributeError(f"Function '{func_name}' does not exist.")
+
+            if "user_id" not in params:
+                params["user_id"] = self.message.chat.id
+
+            result = await function(**params)
+            return result
+        except Exception as e:
+            logger.error(f"Error in function '{function_name}': {e}")
+            return None
+
+    async def send_video(self, params):
+        """
+        Отправка видео.
+        """
+        video_id = params.get("video_id")
+        if video_id:
+            self.sent_message = await self.message.answer_video(video_id)
+            await self.update_keyboard(params.get("keyboard", []), self.sent_message)
 
     @staticmethod
     def get_handler(action_type: str):
         """
-        Возвращает соответствующий обработчик для типа действия:
-        медиа, кнопки, или функции.
+        Возвращает соответствующий обработчик для типа действия.
         """
-        # Словарь обработчиков для медиа
         media_handlers = {
             "send_video": VideoHandler,
             "send_audio": AudioHandler,
@@ -104,7 +140,6 @@ class ScenarioHandler:
             "send_media_group": MediaGroupHandler,
         }
 
-        # Словарь обработчиков для кнопок
         button_handlers = {
             "url": ButtonHandler,
             "web_app": ButtonHandler,
@@ -112,115 +147,57 @@ class ScenarioHandler:
             "execute_function": ButtonHandler,
         }
 
-        # Сначала проверим, медиа ли это действие
+        # Проверка для медиа
         handler = media_handlers.get(action_type)
         if handler:
             return handler
 
-        # Если это кнопка, то обрабатываем её
+        # Проверка для кнопок
         handler = button_handlers.get(action_type)
         if handler:
             return handler
 
-        # Если ничего не найдено, возвращаем None
         return None
-
-    async def execute_function(self, function_path: str, params: dict):
-        """
-        Выполняет функцию на основе её пути, например, 'users.update_user'.
-        Передает параметры из `args` в функцию репозитория.
-        """
-        try:
-            # Разбиваем путь на репозиторий и функцию
-            parts = function_path.split(".")
-            if len(parts) != 2:
-                raise ValueError(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
-
-            repo_name, function_name = parts
-
-            # Получаем репозиторий
-            repo = await get_repo(self.config)
-
-            # Получаем функцию из репозитория
-            repo_func = getattr(repo, repo_name, None)
-            if not repo_func:
-                raise AttributeError(f"Repository '{repo_name}' does not exist.")
-
-            function = getattr(repo_func, function_name, None)
-            if not function:
-                raise AttributeError(f"Function '{function_name}' does not exist.")
-
-            # Добавляем user_id, если его нет в параметрах
-            if "user_id" not in params:
-                params["user_id"] = self.message.chat.id
-
-            # Печать параметров перед выполнением функции для отладки
-            print(f"Executing function '{function_path}' with params: {params}")
-
-            # Выполним функцию с параметрами
-            result = await function(**params)
-
-            logger.info(f"Executed function '{function_path}' with params: {params}")
-            return result
-
-        except ValueError as e:
-            logger.error(f"Validation error: {e}")
-            await self.message.answer(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
-        except AttributeError as e:
-            logger.error(f"Repository error: {e}")
-            await self.message.answer(f"Error executing function: {e}")
-        except SQLAlchemyError as e:
-            logger.error(f"SQLAlchemy error: {e}")
-            await self.message.answer(f"Database error while executing function: {function_path}")
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            await self.message.answer(f"Unexpected error: {e}")
 
     async def create_keyboard(self, params: dict):
         """
         Создание многоуровневой клавиатуры на основе данных из сценария.
-        Обрабатывает все 4 типа кнопок: url, web_app, callback_data и execute_function,
-        с поддержкой многоуровневых клавиш.
         """
         keyboard_data = params.get("keyboard", [])
         keyboard = []
 
-        # Обработка каждого ряда в многокнопочной клавиатуре
         for row in keyboard_data:
             button_row = []
-            for button in row:  # Каждый ряд из buttons
-                button_type = button.get("type", "callback_data")  # Определяем тип кнопки
+            for button in row:
+                button_type = button.get("type", "callback_data")
 
                 # Для кнопок типа execute_function
                 if button_type == "execute_function":
-                    # Сериализуем параметры в строку
-                    function_params = button.get("args", {})
+                    function_params = button.get("params", {})
                     serialized_params = json.dumps(function_params)
 
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
                         callback_data=f"params:{button.get('function_name')}:{serialized_params}"
-                        # Добавляем сериализованные параметры
                     ))
 
                 # Обработка других типов кнопок
                 elif button_type == "url":
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
-                        url=button.get("url")  # Простой URL
+                        url=button.get("url")
                     ))
                 elif button_type == "web_app":
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
-                        web_app=WebAppInfo(url=button.get("web_app"))  # Открывает web app
+                        web_app=WebAppInfo(url=button.get("web_app"))
                     ))
                 elif button_type == "callback_data":
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
-                        callback_data=button.get("callback_data")  # Для обработки callback
+                        callback_data=button.get("callback_data")
                     ))
 
-            # Добавляем собранный ряд кнопок в клавиатуру
             keyboard.append(button_row)
 
         return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -228,15 +205,12 @@ class ScenarioHandler:
     async def update_keyboard(self, update_params, sent_message):
         """
         Обновление клавиатуры через delay и новый набор кнопок.
-        Если клавиатура - это список, просто обновляем её.
-        Если пустая клавиатура - удаляем её.
         """
         if isinstance(update_params, dict):
             new_keyboard_data = update_params.get("keyboard", [])
         else:
             new_keyboard_data = update_params
 
-        # Если клавиатура пуста, удаляем её
         if not new_keyboard_data:
             try:
                 await sent_message.edit_reply_markup(reply_markup=None)
@@ -245,11 +219,9 @@ class ScenarioHandler:
             return
 
         new_keyboard = []
-
-        # Создание клавиатуры из переданных данных
         for button_row in new_keyboard_data:
             button_row_markup = []
-            for button in button_row:  # Каждый элемент ряда кнопок
+            for button in button_row:
                 button_type = button.get("type", "callback_data")
 
                 if button_type == "url":
@@ -276,46 +248,9 @@ class ScenarioHandler:
             new_keyboard.append(button_row_markup)
 
         try:
-            # Проверяем тип контента сообщения
-            if sent_message.content_type == 'text':
-                # Если это текстовое сообщение, редактируем текст и клавиатуру
-                await sent_message.edit_text(
-                    text=sent_message.text,  # Оставляем текущий текст
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-                )
-            elif sent_message.content_type == 'photo':
-                # Если это фото, редактируем его и клавиатуру
-                await sent_message.edit_media(
-                    media=InputMediaPhoto(
-                        media=sent_message.photo[0].file_id,  # Используем актуальный file_id
-                        caption=sent_message.caption
-                    ),
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-                )
-            elif sent_message.content_type == 'video':
-                # Если это видео, редактируем его и клавиатуру
-                await sent_message.edit_media(
-                    media=InputMediaVideo(
-                        media=sent_message.video.file_id,  # Используем актуальный file_id
-                        caption=sent_message.caption
-                    ),
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-                )
-            elif sent_message.content_type == 'audio':
-                # Если это аудио, редактируем его и клавиатуру
-                await sent_message.edit_media(
-                    media=InputMediaAudio(
-                        media=sent_message.audio.file_id,  # Используем актуальный file_id
-                        caption=sent_message.caption
-                    ),
-                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
-                )
-            else:
-                logger.error(f"Unsupported media type: {sent_message.content_type}")
-
+            await sent_message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard))
         except TelegramBadRequest as e:
             logger.error(f"Error while editing message: {e}. Sending a new message instead.")
-            # Если редактирование не удалось, отправляем новое сообщение
             await self.message.answer(
                 "Here is the updated content with new buttons.",
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)

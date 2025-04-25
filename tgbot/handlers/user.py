@@ -35,27 +35,27 @@ user_router = Router()
 # #       "url": "https://media-hosting.imagekit.io/bb639c2ad9ae4ef6/@dvachannel%20(1).mp4?Expires=1840146802&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=i8kkEZgWkzDfeZpYa1vPonksnGxUOeywVTNdRoGwGHgVYVxoDUR~ijHU71rvzI4M~XcFvVCWO0Mo183TbLOI9ayy2ybirQ5iEI5HfT~3cm3v4nncrdEpnJ08jfagqTu5B~LP0vB3icFZ3Gt7cPN38bS3ivwoER37HhilLu674Ia9U52Jhaw7D5tTnCfkg97yW1gz1sFK8zplYiG3TZ1h-dwLkt3FWKuOGdZiMuYGancDaU3Z-3Jid9w9ReDg2kAWq8GIQ9r~YOjx5Sgt76Xt0K~FoHrYQxTiZ2treoRk8PLRlrpHQObFEiXITkPHBPMEtwjfR8wNY0z0x70jysNV-Q__"
 # #     },
 # #     "caption": "Check out this video!",
-# #     "keyboard": [
-# #       [
-# #         {
-# #           "type": "url",
-# #           "text": "Go to Website",
-# #           "url": "https://www.google.com"
-# #         },
-# #         {
-# #           "type": "callback_data",
-# #           "text": "Buy Product",
-# #           "callback_data": "buy_product"
-# #         }
-# #       ],
-# #       [
-# #         {
-# #           "type": "web_app",
-# #           "text": "Open Web App",
-# #           "web_app": "https://www.google.com"
-# #         }
-# #       ]
-# #     ],
+#     "keyboard": [
+#       [
+#         {
+#           "type": "url",
+#           "text": "Go to Website",
+#           "url": "https://www.google.com"
+#         },
+#         {
+#           "type": "callback_data",
+#           "text": "Buy Product",
+#           "callback_data": "buy_product"
+#         }
+#       ],
+#       [
+#         {
+#           "type": "web_app",
+#           "text": "Open Web App",
+#           "web_app": "https://www.google.com"
+#         }
+#       ]
+#     ],
 # #     "delay": 1,
 # #     "update_keyboard": {
 # #       "keyboard": [
