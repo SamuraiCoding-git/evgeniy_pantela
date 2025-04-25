@@ -25,12 +25,12 @@ class ScenarioHandler:
         self.state = state
         self.config = config
 
-    async def handle_scenario(self, scenario: str):
+    async def handle_scenario(self, scenario: dict):
         """
         Основной метод для обработки сценария.
         Преобразует JSON в структуру данных и проигрывает сценарий.
         """
-        scenario_data = await self.parse_scenario(scenario)
+        scenario_data = scenario  # Теперь это уже объект, переданный в функцию
         await self.play_scenario(scenario_data)
 
     @staticmethod
