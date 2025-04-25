@@ -174,6 +174,7 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
         scenario_handler = ScenarioHandler(message, state, config)
+        print(type(deeplink.scenario))
         await scenario_handler.handle_scenario(deeplink.scenario)
 
 
@@ -208,7 +209,7 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
     if data.get("deeplink"):
         deeplink = await repo.deeplink.get_deeplink_by_id(int(data.get("deeplink")))
         scenario_handler = ScenarioHandler(call.message, state, config)
-        await scenario_handler.handle_scenario(str(deeplink.scenario))
+        await scenario_handler.handle_scenario(deeplink.scenario)
     else:
         await state.clear()
         text = config.messages.course_intro
