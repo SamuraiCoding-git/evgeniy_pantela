@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database.repo.deeplink import DeeplinkRepo
+from infrastructure.database.repo.lessons import LessonRepo
 from infrastructure.database.repo.products import ProductRepo
 from infrastructure.database.repo.purchases import PurchaseRepo
 from infrastructure.database.repo.users import UserRepo
@@ -32,3 +33,7 @@ class RequestsRepo:
     @property
     def deeplink(self) -> DeeplinkRepo:
         return DeeplinkRepo(self.session)
+
+    @property
+    def lessons(self) -> LessonRepo:
+        return LessonRepo(self.session)
