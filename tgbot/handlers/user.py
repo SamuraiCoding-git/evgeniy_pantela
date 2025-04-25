@@ -174,7 +174,7 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
         scenario_handler = ScenarioHandler(message, state, config)
-        print(type(deeplink.scenario))
+        print(deeplink.scenario)
         await scenario_handler.handle_scenario(deeplink.scenario)
 
 
