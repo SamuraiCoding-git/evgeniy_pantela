@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -91,48 +92,6 @@ class TgBot:
 
 
 @dataclass
-class RedisConfig:
-    """
-    Redis configuration class.
-
-    Attributes
-    ----------
-    redis_pass : Optional(str)
-        The password used to authenticate with Redis.
-    redis_port : Optional(int)
-        The port where Redis server is listening.
-    redis_host : Optional(str)
-        The host where Redis server is located.
-    """
-
-    redis_pass: Optional[str]
-    redis_port: Optional[int]
-    redis_host: Optional[str]
-
-    def dsn(self) -> str:
-        """
-        Constructs and returns a Redis DSN (Data Source Name) for this database configuration.
-        """
-        if self.redis_pass:
-            return f"redis://:{self.redis_pass}@{self.redis_host}:{self.redis_port}/0"
-        else:
-            return f"redis://{self.redis_host}:{self.redis_port}/0"
-
-    @staticmethod
-    def from_env(env: Env):
-        """
-        Creates the RedisConfig object from environment variables.
-        """
-        redis_pass = env.str("REDIS_PASSWORD")
-        redis_port = env.int("REDIS_PORT")
-        redis_host = env.str("REDIS_HOST")
-
-        return RedisConfig(
-            redis_pass=redis_pass, redis_port=redis_port, redis_host=redis_host
-        )
-
-
-@dataclass
 class Payment:
     terminal_key: str
     password: str
@@ -146,6 +105,91 @@ class Payment:
 
 
 @dataclass
+class Messages:
+    """
+    A class that processes HTML-formatted messages and replaces HTML tags with appropriate methods.
+
+    Attributes
+    ----------
+    offer_agreement : str
+        The raw HTML message for the offer agreement.
+    course_intro : str
+        The raw HTML message for the course introduction.
+    about_course : str
+        The raw HTML message for about the course.
+    photo_go_intro : str
+        The photo identifier for the Go course introduction.
+    photo_about_course : str
+        The photo identifier for the about course section.
+    """
+
+    offer_agreement: str
+    course_intro: str
+    about_course: str
+    photo_go_intro: str
+    photo_about_course: str
+
+    def process(self) -> dict:
+        """
+        Processes all HTML-formatted messages by replacing HTML tags with corresponding methods like
+        hlink, hbold, hitalic, etc.
+
+        :return: A dictionary with processed messages.
+        """
+        processed_messages = {
+            "offer_agreement": self._process_message(self.offer_agreement),
+            "course_intro": self._process_message(self.course_intro),
+            "about_course": self._process_message(self.about_course)
+        }
+
+        return processed_messages
+
+    def _process_message(self, message: str) -> str:
+        """
+        Helper method to process a single HTML message.
+
+        :param message: The HTML message to process.
+        :return: The processed message.
+        """
+        # Replace <b> and </b> with hbold
+        message = re.sub(r'<b>(.*?)</b>', r'hbold(\1)', message)
+        # Replace <i> and </i> with hitalic
+        message = re.sub(r'<i>(.*?)</i>', r'hitalic(\1)', message)
+        # Replace <a href="url">text</a> with hlink
+        message = re.sub(r'<a href="(.*?)">(.*?)</a>', r'hlink(\2, \1)', message)
+        # Replace <br> with a newline
+        message = message.replace('<br>', '\n')
+        # Handle other tags like <ul>, <ol>, <li> if necessary
+        message = message.replace('<ul>', '').replace('</ul>', '')
+        message = message.replace('<ol>', '').replace('</ol>', '')
+        message = message.replace('<li>', '- ').replace('</li>', '\n')
+
+        return message
+
+    @staticmethod
+    def from_env(env: Env) -> 'Messages':
+        """
+        Creates the Messages object from environment variables.
+
+        :param env: The Env object to load environment variables from.
+
+        :return: A Messages object with all messages loaded from environment variables.
+        """
+        offer_agreement = env.str("OFFER_AGREEMENT", default="")
+        course_intro = env.str("COURSE_INTRO", default="")
+        about_course = env.str("ABOUT_COURSE", default="")
+        photo_go_intro = env.str("PHOTO_GO_INTRO", default="")
+        photo_about_course = env.str("PHOTO_ABOUT_COURSE", default="")
+
+        return Messages(
+            offer_agreement=offer_agreement,
+            course_intro=course_intro,
+            about_course=about_course,
+            photo_go_intro=photo_go_intro,
+            photo_about_course=photo_about_course
+        )
+
+@dataclass
 class Config:
     """
     The main configuration class that integrates all the other configuration classes.
@@ -156,8 +200,6 @@ class Config:
     ----------
     tg_bot : TgBot
         Holds the settings related to the Telegram Bot.
-    misc : Miscellaneous
-        Holds the values for miscellaneous settings.
     db : Optional[DbConfig]
         Holds the settings specific to the database (default is None).
     redis : Optional[RedisConfig]
@@ -167,7 +209,7 @@ class Config:
     tg_bot: TgBot
     payment: Payment
     db: Optional[DbConfig] = None
-    redis: Optional[RedisConfig] = None
+    messages: Optional[Messages] = None
 
 
 def load_config(path: str = None) -> Config:
@@ -187,4 +229,5 @@ def load_config(path: str = None) -> Config:
         tg_bot=TgBot.from_env(env),
         payment=Payment.from_env(env),
         db=DbConfig.from_env(env),
+        messages=Messages.from_env(env)
     )

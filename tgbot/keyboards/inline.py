@@ -14,7 +14,7 @@ def offer_keyboard():
 def start_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Купить", callback_data="buy")
+            InlineKeyboardButton(text="Оплатить доступ", callback_data="buy")
         ],
         [
             InlineKeyboardButton(text="Подробнее", callback_data="about")
@@ -28,7 +28,7 @@ def start_keyboard():
 def buy_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Купить", callback_data="buy")
+            InlineKeyboardButton(text="Оплатить доступ", callback_data="buy")
         ],
         [
             InlineKeyboardButton(text="⏪ Назад", callback_data="back")
@@ -88,9 +88,6 @@ def deeplink_keyboard():
         [
             InlineKeyboardButton(text="Создать диплинк", callback_data="create_deeplink")
         ],
-        # [
-        #     InlineKeyboardButton(text="Список диплинков", callback_data="list_deeplink")
-        # ],
         [
             InlineKeyboardButton(text="⏪ Назад", callback_data="admin_back")
         ]
@@ -112,10 +109,10 @@ def source_keyboard():
 def payment_method_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="325₽ в месяц", callback_data="credit")
+            InlineKeyboardButton(text="2490₽ ЕДИНОРАЗОВО", callback_data="onetime")
         ],
         [
-            InlineKeyboardButton(text="2490₽ ЕДИНОРАЗОВО", callback_data="onetime")
+            InlineKeyboardButton(text="325₽ в месяц", callback_data="credit")
         ]
     ])
     return keyboard

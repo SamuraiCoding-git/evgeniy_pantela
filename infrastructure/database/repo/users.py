@@ -2,8 +2,8 @@ from typing import Optional, List
 
 from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 
 from infrastructure.database.models import User, Purchase
 from infrastructure.database.repo.base import BaseRepo
@@ -37,30 +37,49 @@ class UserRepo(BaseRepo):
 
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
         """Получение пользователя по ID"""
-        result = await self.session.execute(select(User).where(User.id == user_id))
-        return result.scalar_one_or_none()  # Avoids try-except block
+        # Используем session.get для извлечения пользователя по первичному ключу
+        return await self.session.get(User, user_id)  # Avoids try-except block
 
     async def update_user(self, user_id: int, username: Optional[str] = None) -> Optional[User]:
         """Обновление данных пользователя"""
-        async with self.session.begin():
-            user = await self.get_user_by_id(user_id)
+        # Открываем асинхронную сессию и начинаем транзакцию
+        async with self.session as session:
+            await session.begin()
+            # begin() автоматически начнёт транзакцию
+            # Получаем пользователя из базы данных
+            result = await self.session.execute(select(User).filter_by(id=user_id))
+            user = result.scalar_one_or_none()  # Получаем пользователя или None
+
             if user:
                 if username is not None:
                     user.username = username
-                await self.session.commit()
-                return user
-        return None
+                # Если нужно, можно явно вызвать commit() для сохранения изменений
+                await self.session.commit()  # Обычно в async контексте commit нужно делать вручную
+
+        # Возвращаем обновленного пользователя
+        return user
 
     async def delete_user(self, user_id: int) -> bool:
-        """Удаление пользователя"""
-        async with self.session.begin():
-            result = await self.session.execute(select(User).where(User.id == user_id))
-            user = result.scalar_one_or_none()
-            if user:
-                await self.session.delete(user)
-                await self.session.commit()
-                return True
-        return False
+        try:
+            # Начинаем транзакцию
+            async with self.session as session:
+                await session.begin()
+                # Открываем транзакцию
+                # Получаем пользователя из базы данных с использованием метода select
+                user = await self.session.get(User, user_id)
+
+                if user:
+                    # Удаляем пользователя
+                    await self.session.delete(user)
+                    return True  # Если пользователь найден и удален
+                else:
+                    return False  # Если пользователь не найден
+        except SQLAlchemyError as e:
+            # Логируем ошибку при работе с SQLAlchemy
+            raise
+        except Exception as e:
+            # Логируем ошибку или обрабатываем исключение, если необходимо
+            print(f"Error while deleting user: {e}")
 
     async def get_all_users(self) -> List[dict]:
         stmt = (

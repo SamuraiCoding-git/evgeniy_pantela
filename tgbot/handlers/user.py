@@ -1,8 +1,9 @@
+import json
+
 from aiogram import Router, F, Bot
-from aiogram.filters import CommandStart, CommandObject
+from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
-from aiogram.utils.markdown import hlink, hbold, hitalic, hblockquote
 
 from tgbot.config import Config
 from tgbot.keyboards.callback_data import AcceptCreditData
@@ -10,42 +11,171 @@ from tgbot.keyboards.inline import start_keyboard, buy_keyboard, offer_keyboard,
     payment_method_keyboard, credit_keyboard, approve_credit
 from tgbot.misc.states import PaymentStates, CreditStates
 from tgbot.utils.db_utils import get_repo
+from tgbot.utils.deeplink_utils import ScenarioHandler
 from tgbot.utils.payment_utils import Payment
 
 user_router = Router()
 
+# @user_router.message(Command("test_deeplink_132123"))
+# async def start_handler(message: Message, state: FSMContext, config: Config):
+#     scenario_json = """
+# #     {
+# #   "actions": [
+# #     {
+# #       "action": "send_text",
+# #       "params": {
+# #         "text": "Welcome! Here's some media content for you to explore.",
+# #         "delay": 1
+# #       }
+# #     },
+# #     {
+# #   "action": "send_video",
+# #   "params": {
+# #     "video": {
+# #       "url": "https://media-hosting.imagekit.io/bb639c2ad9ae4ef6/@dvachannel%20(1).mp4?Expires=1840146802&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=i8kkEZgWkzDfeZpYa1vPonksnGxUOeywVTNdRoGwGHgVYVxoDUR~ijHU71rvzI4M~XcFvVCWO0Mo183TbLOI9ayy2ybirQ5iEI5HfT~3cm3v4nncrdEpnJ08jfagqTu5B~LP0vB3icFZ3Gt7cPN38bS3ivwoER37HhilLu674Ia9U52Jhaw7D5tTnCfkg97yW1gz1sFK8zplYiG3TZ1h-dwLkt3FWKuOGdZiMuYGancDaU3Z-3Jid9w9ReDg2kAWq8GIQ9r~YOjx5Sgt76Xt0K~FoHrYQxTiZ2treoRk8PLRlrpHQObFEiXITkPHBPMEtwjfR8wNY0z0x70jysNV-Q__"
+# #     },
+# #     "caption": "Check out this video!",
+# #     "keyboard": [
+# #       [
+# #         {
+# #           "type": "url",
+# #           "text": "Go to Website",
+# #           "url": "https://www.google.com"
+# #         },
+# #         {
+# #           "type": "callback_data",
+# #           "text": "Buy Product",
+# #           "callback_data": "buy_product"
+# #         }
+# #       ],
+# #       [
+# #         {
+# #           "type": "web_app",
+# #           "text": "Open Web App",
+# #           "web_app": "https://www.google.com"
+# #         }
+# #       ]
+# #     ],
+# #     "delay": 1,
+# #     "update_keyboard": {
+# #       "keyboard": [
+# #
+# #       ],
+# #       "delay": 2
+# #         }
+# #       }
+# #     },
+# #     {
+# #       "action": "send_photo",
+# #       "params": {
+# #         "photo": {
+# #           "url": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e1/57/3e/e1573e85-943a-1370-db52-c1ed0d3d4b49/859784551631_cover.jpg/1200x1200bb.jpg"
+# #         },
+# #         "caption": "Here is a photo!",
+# #         "keyboard": [
+# #           [
+# #             {
+# #               "type": "callback_data",
+# #               "text": "Product Details",
+# #               "callback_data": "product_details"
+# #             },
+# #             {
+# #               "type": "url",
+# #               "text": "Visit Google",
+# #               "url": "https://www.google.com"
+# #             }
+# #           ],
+# #           [
+# #             {
+# #               "type": "execute_function",
+# #               "text": "Update User",
+# #               "function_name": "users.update_user",
+# #               "args": {
+# #                 "username": "new_username"
+# #               }
+# #             }
+# #           ]
+# #         ],
+# #         "delay": 1
+# #       }
+# #     },
+# #     {
+# #       "action": "send_document",
+# #       "params": {
+# #         "document": {
+# #           "id": "BQACAgIAAxkBAAIH0WgK16rSiR3i4Gdze5oeeiq31dfZAALaeQACn2NZSM8ZIPu8YzCRNgQ"
+# #         },
+# #         "caption": "Here is a document!",
+# #         "keyboard": [
+# #           [
+# #             {
+# #               "type": "web_app",
+# #               "text": "Open App",
+# #               "web_app": "https://www.google.com"
+# #             },
+# #             {
+# #               "type": "callback_data",
+# #               "text": "Support",
+# #               "callback_data": "support"
+# #             }
+# #           ]
+# #         ],
+# #         "delay": 1
+# #       }
+# #     }
+# #   ]
+# # }
+#     """
+#
+#     scenario_handler = ScenarioHandler(message, state, config)
+#     await scenario_handler.handle_scenario(scenario_json)
+
+
+@user_router.callback_query(F.data.startswith('params:'))
+async def handle_execute_function(callback_query: CallbackQuery, state: FSMContext, config: Config):
+    # Получаем данные из callback_data
+    callback_data = callback_query.data.split(":", 2)  # Ограничиваем на 3 части: 'params', 'function_name', 'params_data'
+
+    if len(callback_data) != 3:
+        await callback_query.answer("Invalid callback data format.")
+        return
+
+    # Извлекаем название функции и сериализованные параметры
+    function_name = callback_data[1]  # Имя функции
+    serialized_params = callback_data[2]  # Сериализованные параметры
+
+    try:
+        # Десериализуем параметры
+        params = json.loads(serialized_params)
+    except json.JSONDecodeError:
+        await callback_query.answer("Error decoding parameters.")
+        return
+
+    # Добавляем user_id в параметры
+    params["user_id"] = callback_query.from_user.id
+
+    # Создаем экземпляр ScenarioHandler
+    scenario_handler = ScenarioHandler(callback_query.message, state, config)
+
+    # Вызываем метод execute_function внутри класса с переданными параметрами
+    await scenario_handler.execute_function(function_name, params)
+
+    # Ответ пользователю
+    await callback_query.answer(f"Executing function {function_name} with parameters.")
+
 @user_router.message(CommandStart(deep_link=True))
 async def user_deeplink(message: Message, command: CommandObject, state: FSMContext, config: Config):
-    print(command.args)
     await state.update_data(deeplink=command.args)
     repo = await get_repo(config)
     user = await repo.users.get_user_by_id(message.from_user.id)
     if not user:
-        text = (
-            f"При использовании бота вы соглашаетесь с "
-            f"{hlink('офертой', 'https://e1daea51-9c17-4933-adcb-86779a620982.selstorage.ru/250216%20%D0%94%D0%BE%D0%B3%D0%BE%D0%B2%D0%BE%D1%80-%D0%BE%D1%84%D0%B5%D1%80%D1%82%D0%B0.docx')} "
-            f"и {hlink('политикой конфиденциальности', 'https://e1daea51-9c17-4933-adcb-86779a620982.selstorage.ru/%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%B8%D0%BA%D0%B0_%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B4%D0%B5%D0%BD%D1%86%D0%B8%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D0%98%D0%9F_%D0%9F%D0%B0%D0%BD%D1%82%D0%B5%D0%BB%D0%B0.docx')}."
-        )
+        text = config.messages.offer_agreement
         await message.answer(text, reply_markup=offer_keyboard())
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
-        text = (hbold('Доступ к каналу "Первый шаг"\n'),
-                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
-                hbold('Доступ выдается навсегда'))
-        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-        if deeplink.source == "video":
-            video = deeplink.target
-            await message.answer_video(
-                video=video,
-                caption=deeplink.link
-            )
-        else:
-            await message.answer_photo(
-                photo=photo,
-                caption="\n".join(text),
-                reply_markup=start_keyboard()
-            )
+        print(deeplink.scenario)
+        scenario_handler = ScenarioHandler(message, state, config)
+        await scenario_handler.handle_scenario(str(json.dumps(deeplink.scenario)))
 
 
 @user_router.message(CommandStart())
@@ -53,21 +183,14 @@ async def user_start(message: Message, config: Config):
     repo = await get_repo(config)
     user = await repo.users.get_user_by_id(message.from_user.id)
     if user:
-        text = (hbold('Доступ к каналу "Первый шаг"\n'),
-                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
-                hbold('Доступ выдается навсегда'))
-        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
+        text = config.messages.course_intro
+        photo = config.messages.photo_go_intro
         await message.answer_photo(
             photo=photo,
             caption="\n".join(text),
             reply_markup=start_keyboard())
         return
-    text = (
-        f"При использовании бота вы соглашаетесь с "
-        f"{hlink('офертой', 'https://e1daea51-9c17-4933-adcb-86779a620982.selstorage.ru/250405_%D0%9E%D1%84%D0%B5%D1%80%D1%82%D0%B0_%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF_%D0%BA_%D0%A2%D0%93_%D0%BA%D0%B0%D0%BD%D0%B0%D0%BB%D1%83_%D0%B8%D1%81%D0%BF%D1%80.docx')} "
-        f"и {hlink('политикой конфиденциальности', 'https://e1daea51-9c17-4933-adcb-86779a620982.selstorage.ru/%D0%9F%D0%BE%D0%BB%D0%B8%D1%82%D0%B8%D0%BA%D0%B0_%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B4%D0%B5%D0%BD%D1%86%D0%B8%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D0%B8_%D0%98%D0%9F_%D0%9F%D0%B0%D0%BD%D1%82%D0%B5%D0%BB%D0%B0.docx')}."
-    )
+    text = config.messages.offer_agreement
     await message.answer(text, reply_markup=offer_keyboard())
 
 
@@ -83,33 +206,14 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
         call.message.chat.username,
         None if not data.get("deeplink") else int(data.get("deeplink")),
     )
-    deeplink_target = ""
     if data.get("deeplink"):
         deeplink = await repo.deeplink.get_deeplink_by_id(int(data.get("deeplink")))
-        text = (hbold('Доступ к каналу "Первый шаг"\n'),
-                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
-                hbold('Доступ выдается навсегда'))
-        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-        if deeplink.source == "video":
-            video = deeplink.target
-            await call.message.answer_video(
-                video=video,
-                caption=deeplink.link
-            )
-        else:
-            await call.message.answer_photo(
-                photo=photo,
-                caption="\n".join(text),
-                reply_markup=start_keyboard()
-            )
+        scenario_handler = ScenarioHandler(call.message, state, config)
+        await scenario_handler.handle_scenario(str(deeplink.scenario))
     else:
         await state.clear()
-        text = (hbold('Доступ к каналу "Первый шаг"\n'),
-                'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-                hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
-                hbold('Доступ выдается навсегда'))
-        photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
+        text = config.messages.course_intro
+        photo = config.messages.photo_go_intro
         await call.message.answer_photo(
             photo=photo,
             caption="\n".join(text),
@@ -252,20 +356,9 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
 
 @user_router.callback_query(F.data == "about")
 async def about_callback(call: CallbackQuery, config: Config):
-    photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-    text = (
-        hbold('Что внутри?\n'),
-        hblockquote('Видео уроки по следующим темам:'),
-        '\n1. Основные ХТТП методы',
-        '2. Что такое Рест Апи?',
-        '3. Что такое Git',
-        '4. Что такое реляционная База Данных',
-        '5. Работа с БД\n',
-        hblockquote('Вместе пишем проекты:\n'),
-        '\n1. Создаем игру "камень, ножницы, бумага" с работающим сайтом',
-        '2. Создаем генератор случайных цитат (CRUD операции)',
-        '3. Делаем стену из ВКонтакте'
-    )
+    photo = config.messages.photo_go_intro
+    text = config.messages.about_course
+
     media = InputMediaPhoto(
         media=photo,
         caption="\n".join(text),
@@ -276,11 +369,8 @@ async def about_callback(call: CallbackQuery, config: Config):
 
 @user_router.callback_query(F.data == "back")
 async def back_callback(call: CallbackQuery, config: Config):
-    photo = "AgACAgIAAxkBAAICr2fm3EJnFAGYDCkU45oAAQKV_fbXeQAC0-wxGx5fOEvs-Ge3FpT9jgEAAwIAA3kAAzYE"
-    text = (hbold('Доступ к каналу "Первый шаг"\n'),
-            'Видео уроки по базе языка Го, регулярные эфиры, ответы на вопросы\n',
-            hitalic('Цена - 2.490 рублей | 325 рублей в месяц\n'),
-            hbold('Доступ выдается навсегда'))
+    photo = config.messages.photo_go_intro
+    text = config.messages.course_intro
     media = InputMediaPhoto(
         media=photo,
         caption="\n".join(text)
