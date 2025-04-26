@@ -175,7 +175,7 @@ async def user_start(message: Message, config: Config):
     if user:
         text = config.messages.course_intro
         photo = config.messages.photo_go_intro
-        print(photo)
+        print(text)
         await message.answer_photo(
             photo=photo,
             caption="\n".join(text),
