@@ -84,9 +84,10 @@ async def admin_table(call: CallbackQuery, config: Config):
 
     save_to_excel(users)
 
-    file = FSInputFile(path="/Users/matvejdoroshenko/PycharmProjects/evgeniy_pantela/output.xlsx")
+    # file = FSInputFile(path="/Users/matvejdoroshenko/PycharmProjects/evgeniy_pantela/output.xlsx")
+    file = FSInputFile(path="/root/evgeniy_pantela/output.xlsx")
     await call.message.answer_document(document=file)
-    os.remove("/Users/matvejdoroshenko/PycharmProjects/evgeniy_pantela/output.xlsx")
+    os.remove("/root/evgeniy_pantela/output.xlsx")
 
 @admin_router.callback_query(F.data == "mailing")
 async def admin_mailing(call: CallbackQuery, config: Config, state: FSMContext):
