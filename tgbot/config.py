@@ -136,10 +136,6 @@ class Messages:
         Processes HTML message into Telegram-ready text using aiogram markdown functions.
         """
 
-        message = message.replace('<ul>', '').replace('</ul>', '')
-        message = message.replace('<ol>', '').replace('</ol>', '')
-        message = message.replace('<li>', '- ').replace('</li>', '\n')
-
         message = message.replace('<br>', '\n')
 
         message = re.sub(r'<b>(.*?)</b>', lambda m: hbold(m.group(1).strip()), message, flags=re.DOTALL)

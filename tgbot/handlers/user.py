@@ -351,13 +351,13 @@ async def about_callback(call: CallbackQuery, config: Config):
 
     print(text)
 
-    # media = InputMediaPhoto(
-    #     media=photo,
-    #     caption="\n".join(text),
-    # )
-    # await call.message.edit_media(
-    #     media=media,
-    #     reply_markup=buy_keyboard())
+    media = InputMediaPhoto(
+        media=photo,
+        caption="\n".join(text),
+    )
+    await call.message.edit_media(
+        media=media,
+        reply_markup=buy_keyboard())
 
 @user_router.callback_query(F.data == "back")
 async def back_callback(call: CallbackQuery, config: Config):
