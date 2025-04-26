@@ -41,7 +41,7 @@
             [
               {
                 "type": "execute_function",
-                "text": "Следующий урок",
+                "text": "Посмотрел",
                 "callback_id": "next_lesson_2"
               }
             ]

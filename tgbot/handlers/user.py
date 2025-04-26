@@ -137,13 +137,10 @@ async def handle_callback_query(callback: CallbackQuery, state: FSMContext, conf
     Обработка всех нажатий на кнопки, у которых callback_data начинается с "callback:".
     """
     callback_id = callback.data.split("callback:", 1)[-1]
-
-    data = await state.get_data()
-
-    handler = ScenarioHandler(message=callback.message, state=state, config=config)
+    handler = ScenarioHandler(callback.message, state, config)
     await handler.handle_callback(callback_id)
-
     await callback.answer()
+
 
 
 @user_router.message(CommandStart(deep_link=True))

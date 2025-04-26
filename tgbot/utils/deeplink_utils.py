@@ -23,6 +23,7 @@ class ScenarioHandler:
         self.params = params or {}
         self.callbacks = {}
 
+
     async def handle_scenario(self, scenario: dict):
         self.callbacks = scenario.get("callbacks", {})
         await self.state.update_data(callbacks=self.callbacks)  # <<< добавляем это
