@@ -64,7 +64,7 @@ class ScenarioHandler:
                 await self.update_keyboard(params["update_keyboard"], sent_message)
 
         except TelegramBadRequest as e:
-            logger.error(f"Failed to send text message: {e}")
+            logger.exception(f"Failed to send text message: {e}")
 
     async def handle_send_media(self, media_type: str, params: dict):
         try:
@@ -100,10 +100,10 @@ class ScenarioHandler:
             logger.info(f"Executed function: {function_path} with {params}")
 
         except (ValueError, AttributeError, SQLAlchemyError) as e:
-            logger.error(f"Error executing function {function_path}: {e}")
+            logger.exception(f"Error executing function {function_path}: {e}")
             await self.message.answer(f"Error: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            logger.exception(f"Unexpected error: {e}")
             await self.message.answer("An unexpected error occurred.")
 
     async def update_keyboard(self, update_params, sent_message):
@@ -116,7 +116,7 @@ class ScenarioHandler:
             try:
                 await sent_message.edit_reply_markup(reply_markup=None)
             except TelegramBadRequest as e:
-                logger.error(f"Error while removing keyboard: {e}")
+                logger.exception(f"Error while removing keyboard: {e}")
             return
 
         new_keyboard = await build_keyboard(new_keyboard_data)
@@ -152,10 +152,10 @@ class ScenarioHandler:
                     reply_markup=new_keyboard
                 )
             else:
-                logger.error(f"Unsupported media type: {sent_message.content_type}")
+                logger.exception(f"Unsupported media type: {sent_message.content_type}")
 
         except TelegramBadRequest as e:
-            logger.error(f"Error while editing message: {e}. Sending a new message instead.")
+            logger.exception(f"Error while editing message: {e}. Sending a new message instead.")
             await self.message.answer(
                 "Here is the updated content with new buttons.",
                 reply_markup=new_keyboard
@@ -189,11 +189,11 @@ class ScenarioHandler:
                     await self.execute_function(function_name, params)
 
         except Exception as e:
-            logger.error(f"Error while handling callback {callback_id}: {e}")
+            logger.exception(f"Error while handling callback {callback_id}: {e}")
             await self.message.answer("Произошла ошибка при обработке нажатия.")
         finally:
             try:
                 await self.state.clear()
                 logger.info(f"State cleared after handling callback {callback_id}")
             except Exception as e:
-                logger.error(f"Failed to clear state: {e}")
+                logger.exception(f"Failed to clear state: {e}")
