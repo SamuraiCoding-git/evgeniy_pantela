@@ -175,7 +175,6 @@ async def user_start(message: Message, config: Config):
     if user:
         text = config.messages.course_intro
         photo = config.messages.photo_go_intro
-        print(text)
         await message.answer_photo(
             photo=photo,
             caption=text,
@@ -349,6 +348,8 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
 async def about_callback(call: CallbackQuery, config: Config):
     photo = config.messages.photo_go_intro
     text = config.messages.about_course
+
+    print(text)
 
     media = InputMediaPhoto(
         media=photo,
