@@ -184,7 +184,7 @@ def audience_keyboard():
             InlineKeyboardButton(text="Некупившим", callback_data=AudienceData(audience="nonbought").pack())
         ],
         [
-            InlineKeyboardButton(text="Пользователям", callback_data=AudienceData(audience="private").pack())
+            InlineKeyboardButton(text="Пользователю", callback_data=AudienceData(audience="private").pack())
         ]
     ])
     return keyboard
