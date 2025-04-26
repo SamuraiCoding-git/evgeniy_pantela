@@ -1,4 +1,6 @@
 import importlib
+import inspect
+
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -48,17 +50,23 @@ async def send_media(message, media_type: str, params: dict, state):
         raise ValueError(f"Failed to send {media_type}: {e}")
 
 
-async def build_keyboard(keyboard_data) -> InlineKeyboardMarkup | None:
+async def build_keyboard(keyboard_data, state=None):
     if not keyboard_data:
         return None
 
     if isinstance(keyboard_data, str):
         try:
             module = importlib.import_module("tgbot.keyboards.inline")
-            ready_keyboard = getattr(module, keyboard_data)
-            return ready_keyboard
+            keyboard_obj = getattr(module, keyboard_data)
+
+            # 🛠️ Если это функция — вызываем!
+            if inspect.isfunction(keyboard_obj):
+                keyboard_obj = keyboard_obj()
+
+            return keyboard_obj
         except (ImportError, AttributeError) as e:
             raise ValueError(f"Keyboard '{keyboard_data}' not found: {e}")
+
 
     keyboard = []
     for row in keyboard_data:
