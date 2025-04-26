@@ -178,7 +178,7 @@ async def user_start(message: Message, config: Config):
         print(text)
         await message.answer_photo(
             photo=photo,
-            caption="\n".join(text),
+            caption=text,
             reply_markup=start_keyboard())
         return
     text = config.messages.offer_agreement
