@@ -30,7 +30,9 @@
                   {
                     "function_name": "send_video",
                     "params": {
-                      "video_id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
+                      "video": {
+                        "id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
+                      }
                     }
                   },
                   {
