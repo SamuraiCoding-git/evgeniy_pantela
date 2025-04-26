@@ -23,13 +23,13 @@ class ScenarioHandler:
         self.params = params or {}
         self.callbacks = {}
 
-
     async def handle_scenario(self, scenario: dict):
         self.callbacks = scenario.get("callbacks", {})
-        await self.state.update_data(callbacks=self.callbacks)  # <<< добавляем это
+        await self.state.update_data(callbacks=self.callbacks)  # ← Сохраняем в FSM
         actions = scenario.get("actions", [])
         for action in actions:
             await self.handle_action(action)
+
 
     async def handle_action(self, action: dict):
         action_type = action.get("action")
@@ -165,11 +165,9 @@ class ScenarioHandler:
     async def handle_callback(self, callback_id: str):
         """
         Обрабатывает callback_id по нажатию на кнопку.
-        После выполнения сценария очищает state.
         """
-        if not self.callbacks:
-            data = await self.state.get_data()
-            self.callbacks = data.get("callbacks", {})
+        data = await self.state.get_data()
+        self.callbacks = data.get("callbacks", {})  # ← Загружаем сохранённые callbacks
 
         callback_actions = self.callbacks.get(callback_id)
         if not callback_actions:
@@ -177,24 +175,13 @@ class ScenarioHandler:
             await self.message.answer("Произошла ошибка: действие не найдено.")
             return
 
-        try:
-            for action in callback_actions:
-                function_name = action.get("function_name")
-                params = action.get("params", {})
+        for action in callback_actions:
+            function_name = action.get("function_name")
+            params = action.get("params", {})
 
-                if function_name == "send_text":
-                    await self.handle_send_text(params)
-                elif function_name.startswith("send_"):
-                    await self.handle_send_media(function_name, params)
-                else:
-                    await self.execute_function(function_name, params)
-
-        except Exception as e:
-            logger.exception(f"Error while handling callback {callback_id}: {e}")
-            await self.message.answer("Произошла ошибка при обработке нажатия.")
-        finally:
-            try:
-                await self.state.clear()
-                logger.info(f"State cleared after handling callback {callback_id}")
-            except Exception as e:
-                logger.exception(f"Failed to clear state: {e}")
+            if function_name == "send_text":
+                await self.handle_send_text(params)
+            elif function_name.startswith("send_"):
+                await self.handle_send_media(function_name, params)
+            else:
+                await self.execute_function(function_name, params)
