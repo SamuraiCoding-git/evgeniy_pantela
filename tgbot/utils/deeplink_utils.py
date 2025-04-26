@@ -25,6 +25,7 @@ class ScenarioHandler:
 
     async def handle_scenario(self, scenario: dict):
         self.callbacks = scenario.get("callbacks", {})
+        await self.state.update_data(callbacks=self.callbacks)  # <<< добавляем это
         actions = scenario.get("actions", [])
         for action in actions:
             await self.handle_action(action)
@@ -165,9 +166,11 @@ class ScenarioHandler:
         Обрабатывает callback_id по нажатию на кнопку.
         После выполнения сценария очищает state.
         """
-        print(callback_id)
+        if not self.callbacks:
+            data = await self.state.get_data()
+            self.callbacks = data.get("callbacks", {})
+
         callback_actions = self.callbacks.get(callback_id)
-        print(callback_actions)
         if not callback_actions:
             logger.warning(f"No callback actions for id {callback_id}")
             await self.message.answer("Произошла ошибка: действие не найдено.")
