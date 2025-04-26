@@ -165,7 +165,9 @@ class ScenarioHandler:
         Обрабатывает callback_id по нажатию на кнопку.
         После выполнения сценария очищает state.
         """
+        print(callback_id)
         callback_actions = self.callbacks.get(callback_id)
+        print(callback_actions)
         if not callback_actions:
             logger.warning(f"No callback actions for id {callback_id}")
             await self.message.answer("Произошла ошибка: действие не найдено.")
