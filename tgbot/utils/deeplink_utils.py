@@ -368,13 +368,14 @@ class VideoHandler(MediaHandler):
         video_url = self.params.get("video", {}).get("url", "")
         video_id = self.params.get("video", {}).get("id", "")
         caption = self.params.get("caption", "")
+        print(self.params)
 
-        # Отправляем видео и сохраняем отправленное сообщение
-        self.sent_message = await self.message.answer_video(
-            URLInputFile(video_url) if video_url else video_id,
-            caption=caption,
-            reply_markup=await self.create_keyboard(self.params)
-        )
+        # # Отправляем видео и сохраняем отправленное сообщение
+        # self.sent_message = await self.message.answer_video(
+        #     URLInputFile(video_url) if video_url else video_id,
+        #     caption=caption,
+        #     reply_markup=await self.create_keyboard(self.params)
+        # )
 
 
 class AudioHandler(MediaHandler):
