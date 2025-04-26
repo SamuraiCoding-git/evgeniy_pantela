@@ -147,18 +147,20 @@ class ScenarioHandler:
             "url": ButtonHandler,
             "web_app": ButtonHandler,
             "callback_data": ButtonHandler,
-            "execute_function": None,  # Handle function execution separately, no need for ButtonHandler
         }
 
-        # Проверка для медиа
+        # Check for media and button handlers
         handler = media_handlers.get(action_type)
         if handler:
             return handler
 
-        # Проверка для кнопок и execute_function
         handler = button_handlers.get(action_type)
         if handler:
             return handler
+
+        # Add a handler for execute_function
+        if action_type == "execute_function":
+            return ExecuteFunctionHandler  # Add your custom handler for execute_function
 
         return None
 
@@ -301,6 +303,14 @@ class ScenarioHandler:
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
             )
 
+class ExecuteFunctionHandler(ScenarioHandler):
+    async def send(self):
+        # Logic to handle 'execute_function' actions
+        functions = self.params.get("functions", [])
+        for function in functions:
+            function_name = function.get("function_name")
+            function_params = function.get("params", {})
+            await self.execute_function(function_name, function_params)
 
 class MediaHandler(ScenarioHandler):
     def __init__(self, message: Message, params: dict, state: FSMContext, config):
