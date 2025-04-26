@@ -1,14 +1,10 @@
 import logging
-
-from aiogram.types import WebAppInfo, InputMediaAudio
-
 import json
 import asyncio
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, InputMediaPhoto, InputMediaVideo, \
-    URLInputFile
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.exc import SQLAlchemyError
 
 from tgbot.utils.db_utils import get_repo
@@ -16,6 +12,7 @@ from tgbot.utils.db_utils import get_repo
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
 
 class ScenarioHandler:
     def __init__(self, message: Message, state: FSMContext, config):
@@ -68,7 +65,6 @@ class ScenarioHandler:
 
                 # Обновляем клавиатуру
                 if "update_keyboard" in params:
-                    print("update_keyboard")
                     await self.update_keyboard(params["update_keyboard"], sent_message)
             else:
                 logger.warning(f"Unknown action type: {action_type}")
