@@ -202,6 +202,7 @@ async def audience_data(call: CallbackQuery, callback_data: AudienceData, state:
     if callback_data.audience == "private":
         await state.set_state(MailingStates.private_user_id)
         await call.message.edit_text("Введи user_id пользователя: ")
+        return
     await call.message.edit_text(
         "Подтвердить рассылку:",
         reply_markup=confirm_mailing_keyboard()
