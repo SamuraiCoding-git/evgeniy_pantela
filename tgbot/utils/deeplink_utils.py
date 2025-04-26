@@ -353,7 +353,7 @@ class ExecuteFunctionHandler(ScenarioHandler):
             await self.message.answer(f"Unexpected error: {e}")
 
 class MediaHandler(ScenarioHandler):
-    def __init__(self, message: Message, params: dict, state: FSMContext, config):
+    def __init__(self, message: Message, state: FSMContext, config, params: dict):
         super().__init__(message, state, config)
         self.message = message
         self.params = params
