@@ -55,6 +55,12 @@
     ],
     "next_lesson_2": [
       {
+        "function_name": "send_text",
+        "params": {
+          "text": "<a href=\"https://forms.yandex.ru/u/680ce93b84227c96b2fa9110/\">Анкета</a>"
+        }
+      },
+      {
         "function_name": "send_video",
         "params": {
           "video": {
@@ -69,12 +75,6 @@
               }
             ]
           ]
-        }
-      },
-      {
-        "function_name": "send_text",
-        "params": {
-          "text": "<a href=\"https://forms.yandex.ru/u/680ce93b84227c96b2fa9110/\">Анкета</a>"
         }
       },
       {
