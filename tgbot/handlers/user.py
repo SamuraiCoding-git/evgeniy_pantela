@@ -130,6 +130,9 @@ user_router = Router()
 #     scenario_handler = ScenarioHandler(message, state, config)
 #     await scenario_handler.handle_scenario(scenario_json)
 
+@user_router.callback_query()
+async def data(call: CallbackQuery):
+    print(call.data)
 
 @user_router.callback_query(F.data.startswith('params:'))
 async def handle_execute_function(callback_query: CallbackQuery, state: FSMContext, config: Config):
