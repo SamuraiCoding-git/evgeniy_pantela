@@ -41,7 +41,7 @@ class ScenarioHandler:
 
             handler_class = self.get_handler(action_type)
             if handler_class:
-                handler = handler_class(self.message, params, self.state, self.config)
+                handler = handler_class(self.message, self.state, self.config, params)
 
                 # If it's execute_function, we don't need to handle sent_message
                 if action_type == "execute_function":
