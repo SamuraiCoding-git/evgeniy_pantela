@@ -32,7 +32,34 @@
                     "params": {
                       "video": {
                         "id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
-                      }
+                      },
+                      "keyboard": [
+                        [
+                          {
+                            "type": "execute_function",
+                            "text": "Следующий урок",
+                            "function_name": "send_video",
+                            "params": {
+                              "functions": [
+                                {
+                                  "function_name": "send_video",
+                                  "params": {
+                                    "video": {
+                                      "id": "BAACAgIAAxkBAAIP5WgMrz7SlIMPSFGd0WRXonXuxm3tAALzcAAC7KBhSJxS-qHYS21cNgQ"
+                                    }
+                                  }
+                                },
+                                {
+                                  "function_name": "lessons.update_lesson_progress",
+                                  "params": {
+
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      ]
                     }
                   },
                   {
@@ -46,14 +73,6 @@
             }
           ]
         ]
-      }
-    },
-    {
-        "action": "send_video",
-        "params": {
-          "video": {
-            "id": "BAACAgIAAxkBAAIPLmgLzojYvIUQc7EyL5ctJSh1nRRyAAKhewACn2NhSED6_BnhX0oGNgQ"
-          }
       }
     }
   ]

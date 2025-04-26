@@ -173,8 +173,6 @@ async def handle_execute_function(callback_query: CallbackQuery, state: FSMConte
             await scenario_handler.execute_function(function_name, function_params)
 
         # Provide feedback to the user after executing the functions
-        await callback_query.answer(f"Executing functions with parameters.")
-
     except Exception as e:
         await callback_query.answer(f"An error occurred while executing the function.")
 
