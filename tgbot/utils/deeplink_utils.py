@@ -399,7 +399,8 @@ class VideoHandler(MediaHandler):
         video_url = self.params.get("video", {}).get("url", "")
         video_id = self.params.get("video", {}).get("id", "")
         caption = self.params.get("caption", "")
-        # print(self.params)
+
+        print(video_id)
 
         # Отправляем видео и сохраняем отправленное сообщение
         self.sent_message = await self.message.answer_video(

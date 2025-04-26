@@ -16,6 +16,7 @@ class LessonRepo(BaseRepo):
         lesson = lesson.scalar_one_or_none()
 
         if lesson:
+            # If lesson exists, update the lesson_number if needed (it could be updated based on your logic)
             return lesson
 
         # Если прогресс не найден, создаем новый
