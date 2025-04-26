@@ -239,16 +239,12 @@ async def confirm_mailing(call: CallbackQuery, config: Config, state: FSMContext
         users = await repo.users.get_users_without_payment()
     elif target_audience == "private":
         private_user_id = data.get("private_user_id")
-        users = [
-            {"user":
-                 {"id": int(private_user_id)}
-            }
-        ]
+        users = [int(private_user_id)]
     else:
         await call.answer("Не удалось определить аудиторию.", show_alert=True)
         return
 
-    user_ids = [user["user"].id for user in users]
+    user_ids = [user["user"].id for user in users] if target_audience != "private" else users
     reply_markup = create_url_keyboard(buttons) if buttons else None
 
     send_kwargs = {
