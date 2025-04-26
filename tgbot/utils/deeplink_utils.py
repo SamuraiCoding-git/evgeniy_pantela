@@ -71,7 +71,7 @@ class ScenarioHandler:
             if "update_keyboard" in params:
                 await self.update_keyboard(params["update_keyboard"], sent_message)
         except Exception as e:
-            logger.error(f"Failed to send media {media_type}: {e}")
+            logger.exception(f"Failed to send media {media_type}: {e}")
 
     async def execute_function(self, function_path: str, params: dict):
         if not function_path:
