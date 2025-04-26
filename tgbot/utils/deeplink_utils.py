@@ -1,16 +1,9 @@
-import logging
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 import logging
 
 from aiogram.types import WebAppInfo
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
-import logging
 import json
 import asyncio
 from aiogram.exceptions import TelegramBadRequest
@@ -18,11 +11,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, InputMediaPhoto, InputMediaVideo, \
     URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from sqlalchemy.exc import SQLAlchemyError
+
 from tgbot.utils.db_utils import get_repo
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
 
 class ScenarioHandler:
     def __init__(self, message: Message, state: FSMContext, config):
@@ -35,7 +30,7 @@ class ScenarioHandler:
         Основной метод для обработки сценария.
         Преобразует JSON в структуру данных и проигрывает сценарий.
         """
-        scenario_data = scenario
+        scenario_data = scenario  # Это уже объект, переданный в функцию
         await self.play_scenario(scenario_data)
 
     async def play_scenario(self, scenario_data):
@@ -47,20 +42,26 @@ class ScenarioHandler:
             action_type = action.get("action")
             params = action.get("params", {})
 
+            if action_type == "send_text":
+                await self.send_text(params)
+
             handler_class = self.get_handler(action_type)
             if handler_class:
                 handler = handler_class(self.message, params, self.state, self.config)
-                await handler.send()
 
-                # После отправки сохраняем sent_message
-                sent_message = handler.sent_message
-
+                # If it's an execute_function action, execute the functions and do not send anything
                 if action_type == "execute_function":
                     functions = params.get("functions", [])
                     for function in functions:
                         function_name = function.get("function_name")
                         function_params = function.get("params", {})
                         await self.execute_function(function_name, function_params)
+                else:
+                    # For all other actions, call send() only if necessary
+                    await handler.send()
+
+                # После отправки сохраняем sent_message
+                sent_message = handler.sent_message
 
                 if "delay" in params:
                     await asyncio.sleep(params["delay"])
@@ -72,57 +73,57 @@ class ScenarioHandler:
 
     async def execute_function(self, function_path: str, params: dict):
         """
-        Выполняет несколько функций, переданных в params.
+        Выполняет одну функцию на основе её пути, например, 'users.update_user'.
+        Передает параметры из `args` в функцию репозитория.
         """
         try:
-            functions = params.get("functions", [])
+            parts = function_path.split(".")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
 
-            # Обработка нескольких функций
-            for function in functions:
-                function_name = function.get("function_name")
-                function_params = function.get("params", {})
-                result = await self._execute_single_function(function_name, function_params)
-                logger.info(f"Executed function '{function_name}' with params: {function_params}")
+            repo_name, function_name = parts
 
-            return result
-
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            await self.message.answer(f"Unexpected error: {e}")
-
-    async def _execute_single_function(self, function_name: str, params: dict):
-        """
-        Выполняет одну функцию, используя её имя и параметры.
-        """
-        try:
-            repo_name, func_name = function_name.split(".")
+            # Получаем репозиторий
             repo = await get_repo(self.config)
 
+            # Получаем функцию из репозитория
             repo_func = getattr(repo, repo_name, None)
             if not repo_func:
                 raise AttributeError(f"Repository '{repo_name}' does not exist.")
 
-            function = getattr(repo_func, func_name, None)
+            function = getattr(repo_func, function_name, None)
             if not function:
-                raise AttributeError(f"Function '{func_name}' does not exist.")
+                raise AttributeError(f"Function '{function_name}' does not exist.")
 
+            # Добавляем user_id, если его нет в параметрах
             if "user_id" not in params:
                 params["user_id"] = self.message.chat.id
 
+            # Выполним функцию с параметрами
             result = await function(**params)
-            return result
-        except Exception as e:
-            logger.error(f"Error in function '{function_name}': {e}")
-            return None
 
-    async def send_video(self, params):
+            logger.info(f"Executed function '{function_path}' with params: {params}")
+            return result
+
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            await self.message.answer(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
+        except AttributeError as e:
+            logger.error(f"Repository error: {e}")
+            await self.message.answer(f"Error executing function: {e}")
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemy error: {e}")
+            await self.message.answer(f"Database error while executing function: {function_path}")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.message.answer(f"Unexpected error: {e}")
+
+    async def send_text(self, params):
         """
-        Отправка видео.
+        Отправка текстового сообщения в начале сценария
         """
-        video_id = params.get("video_id")
-        if video_id:
-            self.sent_message = await self.message.answer_video(video_id)
-            await self.update_keyboard(params.get("keyboard", []), self.sent_message)
+        text = params.get("text", "Default Text Message")
+        await self.message.answer(text)
 
     @staticmethod
     def get_handler(action_type: str):
@@ -144,7 +145,7 @@ class ScenarioHandler:
             "url": ButtonHandler,
             "web_app": ButtonHandler,
             "callback_data": ButtonHandler,
-            "execute_function": ButtonHandler,
+            "execute_function": None,  # Handle function execution separately, no need for ButtonHandler
         }
 
         # Проверка для медиа
@@ -152,7 +153,7 @@ class ScenarioHandler:
         if handler:
             return handler
 
-        # Проверка для кнопок
+        # Проверка для кнопок и execute_function
         handler = button_handlers.get(action_type)
         if handler:
             return handler
