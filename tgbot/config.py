@@ -144,7 +144,8 @@ class Messages:
 
         return processed_messages
 
-    def _process_message(self, message: str) -> str:
+    @staticmethod
+    def _process_message(message: str) -> str:
         """
         Helper method to process a single HTML message.
 
@@ -175,9 +176,9 @@ class Messages:
 
         :return: A Messages object with all messages loaded from environment variables.
         """
-        offer_agreement = env.str("OFFER_AGREEMENT", default="")
-        course_intro = env.str("COURSE_INTRO", default="")
-        about_course = env.str("ABOUT_COURSE", default="")
+        offer_agreement = Messages._process_message(env.str("OFFER_AGREEMENT", default=""))
+        course_intro = Messages._process_message(env.str("COURSE_INTRO", default=""))
+        about_course = Messages._process_message(env.str("ABOUT_COURSE", default=""))
         photo_go_intro = env.str("PHOTO_GO_INTRO", default="")
         photo_about_course = env.str("PHOTO_ABOUT_COURSE", default="")
 
