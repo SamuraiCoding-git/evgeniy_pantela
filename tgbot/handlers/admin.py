@@ -89,6 +89,7 @@ async def admin_table(call: CallbackQuery, config: Config):
     await call.message.answer_document(document=file)
     os.remove("/root/evgeniy_pantela/output.xlsx")
 
+
 @admin_router.callback_query(F.data == "mailing")
 async def admin_mailing(call: CallbackQuery, config: Config, state: FSMContext):
     await call.message.edit_text("Отправь сообщение: ")
@@ -104,7 +105,6 @@ async def mailing_message(message: Message, state: FSMContext):
         return
 
     await message.answer("Настройка рассылки:", reply_markup=mailing_keyboard())
-
 
 
 @admin_router.callback_query(F.data == "preview")
