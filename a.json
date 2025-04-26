@@ -41,8 +41,31 @@
             [
               {
                 "type": "execute_function",
-                "text": "Посмотрел",
+                "text": "Следующий урок",
                 "callback_id": "next_lesson_2"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "function_name": "lessons.update_lesson_progress",
+        "params": {}
+      }
+    ],
+    "next_lesson_2": [
+      {
+        "function_name": "send_video",
+        "params": {
+          "video": {
+            "id": "BAACAgIAAxkBAAIP5WgMrz7SlIMPSFGd0WRXonXuxm3tAALzcAAC7KBhSJxS-qHYS21cNgQ"
+          },
+          "keyboard": [
+            [
+              {
+                "type": "execute_function",
+                "text": "Посмотрел",
+                "callback_id": "next_lesson_3"
               }
             ]
           ]
@@ -59,19 +82,7 @@
         "params": {}
       }
     ],
-    "next_lesson_2": [
-      {
-        "function_name": "send_video",
-        "params": {
-          "video": {
-            "id": "BAACAgIAAxkBAAIP5WgMrz7SlIMPSFGd0WRXonXuxm3tAALzcAAC7KBhSJxS-qHYS21cNgQ"
-          }
-        }
-      },
-      {
-        "function_name": "lessons.update_lesson_progress",
-        "params": {}
-      },
+    "next_lesson_3": [
       {
         "function_name": "send_photo",
         "params": {
