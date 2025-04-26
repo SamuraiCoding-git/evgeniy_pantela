@@ -182,9 +182,13 @@ def audience_keyboard():
         ],
         [
             InlineKeyboardButton(text="Некупившим", callback_data=AudienceData(audience="nonbought").pack())
+        ],
+        [
+            InlineKeyboardButton(text="Пользователям", callback_data=AudienceData(audience="private").pack())
         ]
     ])
     return keyboard
+
 
 def confirm_mailing_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[

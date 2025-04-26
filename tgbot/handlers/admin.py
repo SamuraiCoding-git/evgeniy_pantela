@@ -197,10 +197,22 @@ async def send_mailing(call: CallbackQuery):
 @admin_router.callback_query(AudienceData.filter())
 async def audience_data(call: CallbackQuery, callback_data: AudienceData, state: FSMContext, config: Config):
     await state.update_data(target_audience=callback_data.audience)
+    if callback_data.audience == "private":
+        await state.set_state(MailingStates.private_user_id)
+        await call.message.edit_text("Введи user_id пользователя: ")
     await call.message.edit_text(
         "Подтвердить рассылку:",
         reply_markup=confirm_mailing_keyboard()
     )
+
+@admin_router.message(MailingStates.private_user_id)
+async def private_user_id(message: Message, state: FSMContext):
+    await state.update_data(private_user_id=message.text)
+    await message.answer(
+        "Подтвердить рассылку:",
+        reply_markup=confirm_mailing_keyboard()
+    )
+
 
 @admin_router.callback_query(F.data == "confirm_mailing")
 async def confirm_mailing(call: CallbackQuery, config: Config, state: FSMContext):
@@ -214,6 +226,7 @@ async def confirm_mailing(call: CallbackQuery, config: Config, state: FSMContext
     buttons = data.get("buttons", [])
     target_audience = data.get("target_audience")
 
+
     # Получение целевой аудитории
     if target_audience == "all":
         users = await repo.users.get_all_users()
@@ -221,6 +234,13 @@ async def confirm_mailing(call: CallbackQuery, config: Config, state: FSMContext
         users = await repo.users.get_users_with_payment()
     elif target_audience == "nonbought":
         users = await repo.users.get_users_without_payment()
+    elif target_audience == "private":
+        private_user_id = data.get("private_user_id")
+        users = [
+            {"user":
+                 {"id": int(private_user_id)}
+            }
+        ]
     else:
         await call.answer("Не удалось определить аудиторию.", show_alert=True)
         return

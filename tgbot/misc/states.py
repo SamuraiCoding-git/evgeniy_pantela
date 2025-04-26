@@ -15,6 +15,7 @@ class CreditStates(StatesGroup):
 class MailingStates(StatesGroup):
     message = State()
     buttons = State()
+    private_user_id = State()
 
 class GrantAccessStates(StatesGroup):
     chat_id = State()
