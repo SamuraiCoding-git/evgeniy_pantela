@@ -129,6 +129,14 @@ def target_keyboard():
     ])
     return keyboard
 
+def admin_back_keyboard():
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⏪ Назад", callback_data="admin_back")
+        ]
+    ])
+    return keyboard
+
 def credit_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [

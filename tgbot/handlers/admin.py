@@ -15,7 +15,7 @@ from tgbot.filters.admin import AdminFilter
 from tgbot.keyboards.callback_data import SourceData, TargetData, AudienceData
 from tgbot.keyboards.inline import admin_keyboard, deeplink_keyboard, source_keyboard, target_keyboard, \
     statistics_keyboard, mailing_keyboard, create_url_keyboard, audience_keyboard, confirm_mailing_keyboard, \
-    enter_keyboard
+    enter_keyboard, admin_back_keyboard
 from tgbot.misc.states import DeeplinkStates, MailingStates, GrantAccessStates
 from tgbot.utils.admin_utils import save_to_excel, process_mailing_data
 from tgbot.utils.db_utils import get_repo
@@ -92,7 +92,7 @@ async def admin_table(call: CallbackQuery, config: Config):
 
 @admin_router.callback_query(F.data == "mailing")
 async def admin_mailing(call: CallbackQuery, config: Config, state: FSMContext):
-    await call.message.edit_text("Отправь сообщение: ")
+    await call.message.edit_text("Отправь сообщение: ", reply_markup=admin_back_keyboard())
     await state.set_state(MailingStates.message)
 
 
@@ -101,7 +101,8 @@ async def mailing_message(message: Message, state: FSMContext):
     await message.delete()
     success = await process_mailing_data(message, state)
     if not success:
-        await message.answer("Тип сообщения не поддерживается. Отправь текст, медиа или документ.")
+        await message.answer("Тип сообщения не поддерживается. Отправь текст, медиа или документ.",
+                             reply_markup=admin_back_keyboard())
         return
 
     await message.answer("Настройка рассылки:", reply_markup=mailing_keyboard())
@@ -159,7 +160,8 @@ async def ask_for_buttons(call: CallbackQuery, state: FSMContext):
         "Отправь кнопки в формате:\n\n"
         "Название кнопки 1 - https://example.com\n"
         "Название кнопки 2 - https://example.org\n\n"
-        "Каждая кнопка — на новой строке."
+        "Каждая кнопка — на новой строке.",
+        reply_markup=admin_back_keyboard()
     )
 
 
@@ -309,7 +311,8 @@ async def confirm_mailing(call: CallbackQuery, config: Config, state: FSMContext
 @admin_router.callback_query(F.data == "grant_access")
 async def grant_access(call: CallbackQuery, config: Config, state: FSMContext):
     await call.message.edit_text(
-        "Отправь user_id человека для выдачи доступа:"
+        "Отправь user_id человека для выдачи доступа:",
+        reply_markup=admin_back_keyboard()
     )
     await state.set_state(GrantAccessStates.chat_id)
 
