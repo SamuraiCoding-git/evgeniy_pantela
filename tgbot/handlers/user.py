@@ -132,14 +132,13 @@ user_router = Router()
 #     await scenario_handler.handle_scenario(scenario_json)
 
 @user_router.callback_query(F.data.startswith("callback:"))
-async def handle_callback_query(callback: CallbackQuery, state: FSMContext):
+async def handle_callback_query(callback: CallbackQuery, state: FSMContext, config: Config):
     """
     Обработка всех нажатий на кнопки, у которых callback_data начинается с "callback:".
     """
     callback_id = callback.data.split("callback:", 1)[-1]
 
     data = await state.get_data()
-    config = data.get("config")
 
     handler = ScenarioHandler(message=callback.message, state=state, config=config)
     await handler.handle_callback(callback_id)
