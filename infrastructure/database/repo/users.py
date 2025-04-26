@@ -4,8 +4,9 @@ from sqlalchemy import or_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
+from sqlalchemy.orm import aliased
 
-from infrastructure.database.models import User, Purchase
+from infrastructure.database.models import User, Purchase, Lesson
 from infrastructure.database.repo.base import BaseRepo
 
 
@@ -82,9 +83,12 @@ class UserRepo(BaseRepo):
             print(f"Error while deleting user: {e}")
 
     async def get_all_users(self) -> List[dict]:
+        lesson_alias = aliased(Lesson)  # Создаём псевдоним для таблицы Lesson
+
         stmt = (
-            select(User, Purchase.is_paid)
-            .outerjoin(Purchase, User.id == Purchase.user_id)  # ← заменили на outerjoin
+            select(User, Purchase.is_paid, lesson_alias.lesson_number)
+            .outerjoin(Purchase, User.id == Purchase.user_id)
+            .outerjoin(lesson_alias, User.id == lesson_alias.user_id)  # Добавляем соединение с таблицей Lesson
         )
         result = await self.session.execute(stmt)
         rows = result.all()
@@ -93,6 +97,7 @@ class UserRepo(BaseRepo):
             {
                 "user": row[0],
                 "is_paid": row[1],  # будет None, если покупок нет
+                "lesson_number": row[2]  # добавляем lesson_number
             }
             for row in rows
         ]
