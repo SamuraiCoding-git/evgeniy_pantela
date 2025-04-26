@@ -7,6 +7,7 @@ from infrastructure.database.repo.base import BaseRepo
 
 class LessonRepo(BaseRepo):
     async def get_or_create_lesson_progress(self, user_id: int) -> Lesson:
+        print("get_or_create_lesson_progress")
         """Получение или создание записи о прогрессе пользователя по урокам"""
         # Проверка, существует ли уже прогресс для данного пользователя и урока
         lesson = await self.session.execute(

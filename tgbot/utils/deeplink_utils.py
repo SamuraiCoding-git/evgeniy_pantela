@@ -1,8 +1,6 @@
-
-
 import logging
 
-from aiogram.types import WebAppInfo
+from aiogram.types import WebAppInfo, InputMediaAudio
 
 import json
 import asyncio
@@ -42,6 +40,7 @@ class ScenarioHandler:
             action_type = action.get("action")
             params = action.get("params", {})
 
+            # Выполнение действия
             if action_type == "send_text":
                 await self.send_text(params)
 
@@ -49,7 +48,7 @@ class ScenarioHandler:
             if handler_class:
                 handler = handler_class(self.message, params, self.state, self.config)
 
-                # If it's an execute_function action, execute the functions and do not send anything
+                # Если это execute_function, выполняем функции, но не отправляем ничего
                 if action_type == "execute_function":
                     functions = params.get("functions", [])
                     for function in functions:
@@ -57,15 +56,17 @@ class ScenarioHandler:
                         function_params = function.get("params", {})
                         await self.execute_function(function_name, function_params)
                 else:
-                    # For all other actions, call send() only if necessary
+                    # Для всех остальных типов действий вызываем send() только если необходимо
                     await handler.send()
 
                 # После отправки сохраняем sent_message
                 sent_message = handler.sent_message
 
+                # Обработка задержек
                 if "delay" in params:
                     await asyncio.sleep(params["delay"])
 
+                # Обновляем клавиатуру
                 if "update_keyboard" in params:
                     await self.update_keyboard(params["update_keyboard"], sent_message)
             else:
@@ -206,12 +207,15 @@ class ScenarioHandler:
     async def update_keyboard(self, update_params, sent_message):
         """
         Обновление клавиатуры через delay и новый набор кнопок.
+        Если клавиатура - это список, просто обновляем её.
+        Если пустая клавиатура - удаляем её.
         """
         if isinstance(update_params, dict):
             new_keyboard_data = update_params.get("keyboard", [])
         else:
             new_keyboard_data = update_params
 
+        # Если клавиатура пуста, удаляем её
         if not new_keyboard_data:
             try:
                 await sent_message.edit_reply_markup(reply_markup=None)
@@ -220,9 +224,11 @@ class ScenarioHandler:
             return
 
         new_keyboard = []
+
+        # Создание клавиатуры из переданных данных
         for button_row in new_keyboard_data:
             button_row_markup = []
-            for button in button_row:
+            for button in button_row:  # Каждый элемент ряда кнопок
                 button_type = button.get("type", "callback_data")
 
                 if button_type == "url":
@@ -249,9 +255,46 @@ class ScenarioHandler:
             new_keyboard.append(button_row_markup)
 
         try:
-            await sent_message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard))
+            # Проверяем тип контента сообщения
+            if sent_message.content_type == 'text':
+                # Если это текстовое сообщение, редактируем текст и клавиатуру
+                await sent_message.edit_text(
+                    text=sent_message.text,  # Оставляем текущий текст
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+                )
+            elif sent_message.content_type == 'photo':
+                # Если это фото, редактируем его и клавиатуру
+                await sent_message.edit_media(
+                    media=InputMediaPhoto(
+                        media=sent_message.photo[0].file_id,  # Используем актуальный file_id
+                        caption=sent_message.caption
+                    ),
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+                )
+            elif sent_message.content_type == 'video':
+                # Если это видео, редактируем его и клавиатуру
+                await sent_message.edit_media(
+                    media=InputMediaVideo(
+                        media=sent_message.video.file_id,  # Используем актуальный file_id
+                        caption=sent_message.caption
+                    ),
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+                )
+            elif sent_message.content_type == 'audio':
+                # Если это аудио, редактируем его и клавиатуру
+                await sent_message.edit_media(
+                    media=InputMediaAudio(
+                        media=sent_message.audio.file_id,  # Используем актуальный file_id
+                        caption=sent_message.caption
+                    ),
+                    reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
+                )
+            else:
+                logger.error(f"Unsupported media type: {sent_message.content_type}")
+
         except TelegramBadRequest as e:
             logger.error(f"Error while editing message: {e}. Sending a new message instead.")
+            # Если редактирование не удалось, отправляем новое сообщение
             await self.message.answer(
                 "Here is the updated content with new buttons.",
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
