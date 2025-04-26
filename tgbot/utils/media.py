@@ -48,7 +48,7 @@ async def send_media(message, media_type: str, params: dict, state):
         raise ValueError(f"Failed to send {media_type}: {e}")
 
 
-async def build_keyboard(self, keyboard_data) -> InlineKeyboardMarkup | None:
+async def build_keyboard(keyboard_data) -> InlineKeyboardMarkup | None:
     if not keyboard_data:
         return None
 

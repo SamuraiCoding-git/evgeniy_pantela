@@ -51,7 +51,7 @@ class ScenarioHandler:
         try:
             text = params.get("text", "Default Text Message")
             keyboard_data = params.get("keyboard", [])
-            keyboard = await build_keyboard(keyboard_data, self.state)
+            keyboard = await build_keyboard(keyboard_data)
 
             sent_message = await self.message.answer(
                 text=_process_message(text),
@@ -118,7 +118,7 @@ class ScenarioHandler:
                 logger.error(f"Error while removing keyboard: {e}")
             return
 
-        new_keyboard = await build_keyboard(new_keyboard_data, self.state)
+        new_keyboard = await build_keyboard(new_keyboard_data)
 
         try:
             if sent_message.content_type == 'text':
