@@ -170,11 +170,14 @@ class ScenarioHandler:
                 # Для кнопок типа execute_function
                 if button_type == "execute_function":
                     function_params = button.get("params", {})
-                    serialized_params = json.dumps(function_params)
+                    functions = function_params.get("functions", [])
+
+                    # Serialize the functions into a single string that can be used in callback data
+                    serialized_functions = json.dumps(functions)
 
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
-                        callback_data=f"params:{button.get('function_name')}:{serialized_params}"
+                        callback_data=f"execute_function:{button.get('function_name')}:{serialized_functions}"
                     ))
 
                 # Обработка других типов кнопок
@@ -370,12 +373,12 @@ class VideoHandler(MediaHandler):
         caption = self.params.get("caption", "")
         print(self.params)
 
-        # # Отправляем видео и сохраняем отправленное сообщение
-        # self.sent_message = await self.message.answer_video(
-        #     URLInputFile(video_url) if video_url else video_id,
-        #     caption=caption,
-        #     reply_markup=await self.create_keyboard(self.params)
-        # )
+        # Отправляем видео и сохраняем отправленное сообщение
+        self.sent_message = await self.message.answer_video(
+            URLInputFile(video_url) if video_url else video_id,
+            caption=caption,
+            reply_markup=await self.create_keyboard(self.params)
+        )
 
 
 class AudioHandler(MediaHandler):
