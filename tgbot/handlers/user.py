@@ -132,7 +132,8 @@ user_router = Router()
 
 @user_router.callback_query(F.data.startswith('execute_function:'))
 async def handle_execute_function(callback_query: CallbackQuery, state: FSMContext, config: Config):
-    # Получаем данные из callback_data
+    data = await state.get_data()
+
     callback_data = callback_query.data.split(":", 2)  # Ограничиваем на 3 части: 'params', 'function_name', 'params_data'
 
     print(len(callback_data))
@@ -142,24 +143,27 @@ async def handle_execute_function(callback_query: CallbackQuery, state: FSMConte
         return
 
     # Извлекаем название функции и сериализованные параметры
-    function_name = callback_data[1]  # Имя функции
-    serialized_params = callback_data[2]  # Сериализованные параметры
+    unique_id = callback_data[0]  # Имя функции
 
-    try:
-        # Десериализуем параметры
-        params = json.loads(serialized_params)
-    except json.JSONDecodeError:
-        await callback_query.answer("Error decoding parameters.")
-        return
+    params = data.get(unique_id)
 
-    # Добавляем user_id в параметры
-    params["user_id"] = callback_query.from_user.id
+    print(params)
 
-    # Создаем экземпляр ScenarioHandler
-    scenario_handler = ScenarioHandler(callback_query.message, state, config)
-
-    # Вызываем метод execute_function внутри класса с переданными параметрами
-    await scenario_handler.execute_function(function_name, params)
+    # try:
+    #     # Десериализуем параметры
+    #     params = json.loads(serialized_params)
+    # except json.JSONDecodeError:
+    #     await callback_query.answer("Error decoding parameters.")
+    #     return
+    #
+    # # Добавляем user_id в параметры
+    # params["user_id"] = callback_query.from_user.id
+    #
+    # # Создаем экземпляр ScenarioHandler
+    # scenario_handler = ScenarioHandler(callback_query.message, state, config)
+    #
+    # # Вызываем метод execute_function внутри класса с переданными параметрами
+    # await scenario_handler.execute_function(function_name, params)
 
     # Ответ пользователю
     await callback_query.answer(f"Executing function {function_name} with parameters.")
