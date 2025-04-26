@@ -133,16 +133,19 @@ class Messages:
     @staticmethod
     def _process_message(message: str) -> str:
         """
-        Processes HTML message, using real aiogram formatting functions.
+        Processes HTML message into Telegram-ready text using aiogram markdown functions.
         """
 
-        message = re.sub(r'<b>(.*?)</b>', lambda m: hbold(m.group(1)), message, flags=re.DOTALL)
-        message = re.sub(r'<i>(.*?)</i>', lambda m: hitalic(m.group(1)), message, flags=re.DOTALL)
-        message = re.sub(r'<a href="(.*?)">(.*?)</a>', lambda m: hlink(m.group(2), m.group(1)), message, flags=re.DOTALL)
-        message = message.replace('<br>', '\n')
         message = message.replace('<ul>', '').replace('</ul>', '')
         message = message.replace('<ol>', '').replace('</ol>', '')
         message = message.replace('<li>', '- ').replace('</li>', '\n')
+
+        message = message.replace('<br>', '\n')
+
+        message = re.sub(r'<b>(.*?)</b>', lambda m: hbold(m.group(1).strip()), message, flags=re.DOTALL)
+        message = re.sub(r'<i>(.*?)</i>', lambda m: hitalic(m.group(1).strip()), message, flags=re.DOTALL)
+        message = re.sub(r'<a href="(.*?)">(.*?)</a>', lambda m: hlink(m.group(2).strip(), m.group(1).strip()), message,
+                         flags=re.DOTALL)
 
         return message
 
