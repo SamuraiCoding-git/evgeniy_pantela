@@ -1,7 +1,7 @@
 import json
 
 from aiogram import Router, F, Bot
-from aiogram.filters import CommandStart, CommandObject, Command
+from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 
@@ -132,49 +132,27 @@ user_router = Router()
 
 @user_router.callback_query(F.data.startswith('execute_function:'))
 async def handle_execute_function(callback_query: CallbackQuery, state: FSMContext, config: Config):
-    # Get stored state data
     data = await state.get_data()
-
-    # Split the callback data into parts (we expect 3 parts: execute_function, unique_id, params_data)
-    callback_data = callback_query.data.split(":", 2)  # Split into 3 parts: 'execute_function', 'unique_id', 'function_params'
+    callback_data = callback_query.data.split(":", 1)
 
     if len(callback_data) != 2:
         await callback_query.answer("Invalid callback data format.")
         return
 
-    # Extract unique ID (to fetch parameters from state)
     unique_id = callback_data[1]
+    functions = data.get(unique_id)
 
-    # Retrieve the parameters from the FSM state using the unique ID
-    params = data.get(unique_id)
-
-    if not params:
+    if not functions:
         await callback_query.answer("No parameters found for this action.")
         return
 
-    try:
-        # If parameters are serialized, deserialize them
-        if isinstance(params, str):
-            params = json.loads(params)
+    handler = ScenarioHandler(callback_query.message, state, config)
 
-        # Add the user_id to the parameters
-        for param in params:
-            param["params"]["user_id"] = callback_query.from_user.id
+    for func in functions:
+        function_name = func.get("function_name")
+        function_params = func.get("params", {})
+        await handler.execute_function(function_name, function_params)
 
-        # Create an instance of ScenarioHandler
-        scenario_handler = ScenarioHandler(callback_query.message, state, config)
-
-        # Loop through each function and execute them
-        for function in params:
-            function_name = function.get("function_name")
-            function_params = function.get("params", {})
-
-            # Call the execute_function method within the ScenarioHandler class
-            await scenario_handler.execute_function(function_name, function_params)
-
-        # Provide feedback to the user after executing the functions
-    except Exception as e:
-        await callback_query.answer(f"An error occurred while executing the function.")
 
 @user_router.message(CommandStart(deep_link=True))
 async def user_deeplink(message: Message, command: CommandObject, state: FSMContext, config: Config):
