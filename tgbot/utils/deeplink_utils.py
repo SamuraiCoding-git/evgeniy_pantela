@@ -68,37 +68,51 @@ class ScenarioHandler:
 
     async def execute_function(self, function_path: str, params: dict):
         """
-        Выполняет одну функцию на основе её пути, например, 'users.update_user'.
-        Передает параметры из `args` в функцию репозитория.
+        Выполняет одну функцию на основе её пути, например, 'send_video', 'users.update_user'.
+        Передает параметры из `args` в функцию репозитория или в функцию отправки медиа.
         """
         try:
-            parts = function_path.split(".")
-            if len(parts) != 2:
-                raise ValueError(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
+            # If it's a media send function (e.g., send_video, send_audio)
+            if function_path.startswith("send_"):
+                # Extract the media type (video, audio, photo, etc.)
+                handler_class = self.get_handler(function_path)
 
-            repo_name, function_name = parts
+                if not handler_class:
+                    raise AttributeError(f"Media handler for '{function_path}' not found.")
 
-            # Получаем репозиторий
-            repo = await get_repo(self.config)
+                # Create the handler instance and send the media
+                handler = handler_class(self.message, self.state, self.config, params)
+                await handler.send()  # Send the media using the handler
 
-            # Получаем функцию из репозитория
-            repo_func = getattr(repo, repo_name, None)
-            if not repo_func:
-                raise AttributeError(f"Repository '{repo_name}' does not exist.")
+            else:
+                # Handle as a normal repository function
+                parts = function_path.split(".")
+                if len(parts) != 2:
+                    raise ValueError(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
 
-            function = getattr(repo_func, function_name, None)
-            if not function:
-                raise AttributeError(f"Function '{function_name}' does not exist.")
+                repo_name, function_name = parts
 
-            # Добавляем user_id, если его нет в параметрах
-            if "user_id" not in params:
-                params["user_id"] = self.message.chat.id
+                # Get the repository
+                repo = await get_repo(self.config)
 
-            # Выполним функцию с параметрами
-            result = await function(**params)
+                # Get the function from the repository
+                repo_func = getattr(repo, repo_name, None)
+                if not repo_func:
+                    raise AttributeError(f"Repository '{repo_name}' does not exist.")
 
-            logger.info(f"Executed function '{function_path}' with params: {params}")
-            return result
+                function = getattr(repo_func, function_name, None)
+                if not function:
+                    raise AttributeError(f"Function '{function_name}' does not exist.")
+
+                # Add user_id to params if not already present
+                if "user_id" not in params:
+                    params["user_id"] = self.message.chat.id
+
+                # Execute the function with parameters
+                result = await function(**params)
+
+                logger.info(f"Executed function '{function_path}' with params: {params}")
+                return result
 
         except ValueError as e:
             logger.error(f"Validation error: {e}")
@@ -213,7 +227,6 @@ class ScenarioHandler:
         """
         # Save the functions to the context or database using the unique_id
         # Example: Using FSM context to store functions
-        print(unique_id)
         await self.state.update_data({unique_id: functions})
 
     async def update_keyboard(self, update_params, sent_message):
