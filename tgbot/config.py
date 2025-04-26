@@ -15,6 +15,7 @@ def _process_message(message: str) -> str:
 
     return message
 
+
 @dataclass
 class DbConfig:
     """
