@@ -42,6 +42,7 @@ async def send_media(message, media_type: str, params: dict):
 
     media_content = params.get(media_type.split("_")[-1], {})
     file_id_or_url = media_content.get("id") or URLInputFile(media_content.get("url"))
+    print(params.get("caption"))
     caption = _process_message(params.get("caption"))
     keyboard = await build_keyboard(params.get("keyboard", []))
 
