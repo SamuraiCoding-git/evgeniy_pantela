@@ -50,14 +50,6 @@
         "action": "send_video",
         "params": {
           "video": {
-            "id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
-          }
-      }
-    },
-    {
-        "action": "send_video",
-        "params": {
-          "video": {
             "id": "BAACAgIAAxkBAAIPLmgLzojYvIUQc7EyL5ctJSh1nRRyAAKhewACn2NhSED6_BnhX0oGNgQ"
           }
       }
