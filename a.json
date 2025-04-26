@@ -5,7 +5,7 @@
         "params": {
           "functions": [
             {
-              "function_name": "lessons.update_user",
+              "function_name": "lessons.get_or_create_lesson_progress",
               "params": {
 
               }
