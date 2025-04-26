@@ -68,6 +68,7 @@ class ScenarioHandler:
 
                 # Обновляем клавиатуру
                 if "update_keyboard" in params:
+                    print("update_keyboard")
                     await self.update_keyboard(params["update_keyboard"], sent_message)
             else:
                 logger.warning(f"Unknown action type: {action_type}")
