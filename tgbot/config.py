@@ -146,9 +146,9 @@ class Messages:
 
         :return: A Messages object with all messages loaded from environment variables.
         """
-        offer_agreement = Messages._process_message(env.str("OFFER_AGREEMENT", default=""))
-        course_intro = Messages._process_message(env.str("COURSE_INTRO", default=""))
-        about_course = Messages._process_message(env.str("ABOUT_COURSE", default=""))
+        offer_agreement = _process_message(env.str("OFFER_AGREEMENT", default=""))
+        course_intro = _process_message(env.str("COURSE_INTRO", default=""))
+        about_course = _process_message(env.str("ABOUT_COURSE", default=""))
         photo_go_intro = env.str("PHOTO_GO_INTRO", default="")
         photo_about_course = env.str("PHOTO_ABOUT_COURSE", default="")
 
