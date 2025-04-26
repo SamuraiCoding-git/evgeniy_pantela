@@ -166,7 +166,7 @@ async def handle_execute_function(callback_query: CallbackQuery, state: FSMConte
     # await scenario_handler.execute_function(function_name, params)
 
     # Ответ пользователю
-    await callback_query.answer(f"Executing function {function_name} with parameters.")
+    # await callback_query.answer(f"Executing function {function_name} with parameters.")
 
 @user_router.message(CommandStart(deep_link=True))
 async def user_deeplink(message: Message, command: CommandObject, state: FSMContext, config: Config):

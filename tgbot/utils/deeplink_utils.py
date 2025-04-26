@@ -37,9 +37,9 @@ class ScenarioHandler:
         for action in actions:
             action_type = action.get("action")
             params = action.get("params", {})
-            print(action)
-            print(action_type)
-            print(params)
+            # print(action)
+            # print(action_type)
+            # print(params)
 
             handler_class = self.get_handler(action_type)
             if handler_class:
