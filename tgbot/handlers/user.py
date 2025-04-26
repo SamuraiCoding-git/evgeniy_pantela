@@ -185,7 +185,9 @@ async def user_start(message: Message, config: Config):
             parse_mode=ParseMode.HTML)
         return
     text = config.messages.offer_agreement
-    await message.answer(text, reply_markup=offer_keyboard())
+    await message.answer(text,
+                         reply_markup=offer_keyboard(),
+                         parse_mode=ParseMode.HTML)
 
 
 @user_router.callback_query(F.data == "accept_offer")
@@ -211,7 +213,8 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
         await call.message.answer_photo(
             photo=photo,
             caption="\n".join(text),
-            reply_markup=start_keyboard())
+            reply_markup=start_keyboard(),
+            parse_mode=ParseMode.HTML)
 
 
 @user_router.callback_query(F.data == "credit")
