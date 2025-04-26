@@ -8,6 +8,8 @@ def _process_message(message: str) -> str:
     """
     Processes HTML message into Telegram-ready text using aiogram markdown functions.
     """
+    if not message:
+        return message
 
     message = message.replace('<br>', '\n')
 
