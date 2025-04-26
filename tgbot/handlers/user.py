@@ -212,7 +212,7 @@ async def accept_offer(call: CallbackQuery, config: Config, state: FSMContext):
         photo = config.messages.photo_go_intro
         await call.message.answer_photo(
             photo=photo,
-            caption="\n".join(text),
+            caption=text,
             reply_markup=start_keyboard(),
             parse_mode=ParseMode.HTML)
 
@@ -370,9 +370,10 @@ async def about_callback(call: CallbackQuery, config: Config):
 async def back_callback(call: CallbackQuery, config: Config):
     photo = config.messages.photo_go_intro
     text = config.messages.course_intro
+    print(text)
     media = InputMediaPhoto(
         media=photo,
-        caption="\n".join(text),
+        caption=text,
         parse_mode=ParseMode.HTML
     )
     await call.message.edit_media(
