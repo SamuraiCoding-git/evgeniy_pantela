@@ -41,38 +41,37 @@ class ScenarioHandler:
             print(action_type)
             print(params)
 
-            #
-            # # Выполнение действия
-            # if action_type == "send_text":
-            #     await self.send_text(params)
-            #
-            # handler_class = self.get_handler(action_type)
-            # if handler_class:
-            #     handler = handler_class(self.message, params, self.state, self.config)
-            #
-            #     # Если это execute_function, выполняем функции, но не отправляем ничего
-            #     if action_type == "execute_function":
-            #         functions = params.get("functions", [])
-            #         for function in functions:
-            #             function_name = function.get("function_name")
-            #             function_params = function.get("params", {})
-            #             await self.execute_function(function_name, function_params)
-            #     else:
-            #         # Для всех остальных типов действий вызываем send() только если необходимо
-            #         await handler.send()
-            #
-            #     # После отправки сохраняем sent_message
-            #     sent_message = handler.sent_message
-            #
-            #     # Обработка задержек
-            #     if "delay" in params:
-            #         await asyncio.sleep(params["delay"])
-            #
-            #     # Обновляем клавиатуру
-            #     if "update_keyboard" in params:
-            #         await self.update_keyboard(params["update_keyboard"], sent_message)
-            # else:
-            #     logger.warning(f"Unknown action type: {action_type}")
+            # Выполнение действия
+            if action_type == "send_text":
+                await self.send_text(params)
+
+            handler_class = self.get_handler(action_type)
+            if handler_class:
+                handler = handler_class(self.message, params, self.state, self.config)
+
+                # Если это execute_function, выполняем функции, но не отправляем ничего
+                if action_type == "execute_function":
+                    functions = params.get("functions", [])
+                    for function in functions:
+                        function_name = function.get("function_name")
+                        function_params = function.get("params", {})
+                        await self.execute_function(function_name, function_params)
+                else:
+                    # Для всех остальных типов действий вызываем send() только если необходимо
+                    await handler.send()
+
+                # После отправки сохраняем sent_message
+                sent_message = handler.sent_message
+
+                # Обработка задержек
+                if "delay" in params:
+                    await asyncio.sleep(params["delay"])
+
+                # Обновляем клавиатуру
+                if "update_keyboard" in params:
+                    await self.update_keyboard(params["update_keyboard"], sent_message)
+            else:
+                logger.warning(f"Unknown action type: {action_type}")
 
     async def execute_function(self, function_path: str, params: dict):
         """
