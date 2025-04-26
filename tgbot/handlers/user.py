@@ -370,7 +370,7 @@ async def about_callback(call: CallbackQuery, config: Config):
 async def back_callback(call: CallbackQuery, config: Config):
     photo = config.messages.photo_go_intro
     text = config.messages.course_intro
-    print(text)
+
     media = InputMediaPhoto(
         media=photo,
         caption=text,
