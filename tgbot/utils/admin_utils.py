@@ -13,13 +13,14 @@ def save_to_excel(data, filename="output.xlsx"):
     ws = wb.active
 
     # Заголовки
-    headers = ["ID", "Имя", "Username", "Deeplink", "Покупка", "Premium", "Дата захода"]
+    headers = ["ID", "Имя", "Username", "Deeplink", "Покупка", "Premium", "Урок", "Дата захода"]
     ws.append(headers)
 
     # Данные
     for item in data:
         user = item["user"]
         is_paid = item["is_paid"]
+        lesson_number = item["lesson_number"]
 
         row = [
             user.id,
@@ -28,6 +29,7 @@ def save_to_excel(data, filename="output.xlsx"):
             user.deeplink or "—",
             "✅" if is_paid else "❌",
             "✅" if user.is_premium is True else "❌" if user.is_premium is False else "-",
+            lesson_number,
             user.created_at.strftime("%Y-%m-%d %H:%M:%S") if user.created_at else "—",
         ]
         ws.append(row)
