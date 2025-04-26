@@ -16,10 +16,11 @@ logging.basicConfig(level=logging.INFO)
 
 
 class ScenarioHandler:
-    def __init__(self, message: Message, state: FSMContext, config):
+    def __init__(self, message: Message, state: FSMContext, config, params=None):
         self.message = message
         self.state = state
         self.config = config
+        self.params = params
 
     async def handle_scenario(self, scenario: dict):
         """
@@ -303,14 +304,64 @@ class ScenarioHandler:
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=new_keyboard)
             )
 
+
 class ExecuteFunctionHandler(ScenarioHandler):
+    def __init__(self, message: Message, state: FSMContext, config, params=None):
+        # Initialize the parent class
+        super().__init__(message, state, config, params)
+
     async def send(self):
-        # Logic to handle 'execute_function' actions
+        """Async method to execute functions"""
         functions = self.params.get("functions", [])
         for function in functions:
             function_name = function.get("function_name")
             function_params = function.get("params", {})
+            # Execute the function
             await self.execute_function(function_name, function_params)
+
+    async def execute_function(self, function_path: str, params: dict):
+        """Execute the function"""
+        try:
+            parts = function_path.split(".")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
+
+            repo_name, function_name = parts
+
+            # Get the repository
+            repo = await get_repo(self.config)
+
+            # Get the function from the repository
+            repo_func = getattr(repo, repo_name, None)
+            if not repo_func:
+                raise AttributeError(f"Repository '{repo_name}' does not exist.")
+
+            function = getattr(repo_func, function_name, None)
+            if not function:
+                raise AttributeError(f"Function '{function_name}' does not exist.")
+
+            # Add user_id if it's missing from params
+            if "user_id" not in params:
+                params["user_id"] = self.message.chat.id
+
+            # Execute the function with parameters
+            result = await function(**params)
+
+            logger.info(f"Executed function '{function_path}' with params: {params}")
+            return result
+
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            await self.message.answer(f"Invalid function path: {function_path}. Expected 'repo_name.function_name'.")
+        except AttributeError as e:
+            logger.error(f"Repository error: {e}")
+            await self.message.answer(f"Error executing function: {e}")
+        except SQLAlchemyError as e:
+            logger.error(f"SQLAlchemy error: {e}")
+            await self.message.answer(f"Database error while executing function: {function_path}")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            await self.message.answer(f"Unexpected error: {e}")
 
 class MediaHandler(ScenarioHandler):
     def __init__(self, message: Message, params: dict, state: FSMContext, config):
