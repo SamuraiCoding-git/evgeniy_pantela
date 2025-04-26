@@ -1,6 +1,8 @@
 import logging
 import json
 import asyncio
+import uuid
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo, InputMediaPhoto, \
     InputMediaVideo, InputMediaAudio, URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -167,20 +169,23 @@ class ScenarioHandler:
             for button in row:
                 button_type = button.get("type", "callback_data")
 
-                # Для кнопок типа execute_function
                 if button_type == "execute_function":
                     function_params = button.get("params", {})
                     functions = function_params.get("functions", [])
 
-                    # Serialize the functions into a single string that can be used in callback data
-                    serialized_functions = json.dumps(functions)
+                    # Create a unique identifier for the button
+                    unique_id = str(uuid.uuid4())
 
+                    # Store the functions in FSM context or temporary storage (e.g., Redis) with unique_id
+                    await self.store_function_params(unique_id, functions)
+
+                    # Create callback_data using the unique_id instead of serialized params
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
-                        callback_data=f"execute_function:{button.get('function_name')}:{serialized_functions}"
+                        callback_data=f"execute_function:{unique_id}"
                     ))
 
-                # Обработка других типов кнопок
+                # Handle other button types
                 elif button_type == "url":
                     button_row.append(InlineKeyboardButton(
                         text=button["text"],
@@ -200,6 +205,15 @@ class ScenarioHandler:
             keyboard.append(button_row)
 
         return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+    async def store_function_params(self, unique_id: str, functions: list):
+        """
+        Store function parameters in FSM or temporary storage.
+        This example assumes you are using FSM or other storage.
+        """
+        # Save the functions to the context or database using the unique_id
+        # Example: Using FSM context to store functions
+        await self.state.update_data({unique_id: functions})
 
     async def update_keyboard(self, update_params, sent_message):
         """
