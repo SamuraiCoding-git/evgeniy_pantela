@@ -1,17 +1,15 @@
 {
   "actions": [
     {
-        "action": "execute_function",
-        "params": {
-          "functions": [
-            {
-              "function_name": "lessons.get_or_create_lesson_progress",
-              "params": {
-
-              }
-            }
-          ]
-        }
+      "action": "execute_function",
+      "params": {
+        "functions": [
+          {
+            "function_name": "lessons.get_or_create_lesson_progress",
+            "params": {}
+          }
+        ]
+      }
     },
     {
       "action": "send_video",
@@ -24,56 +22,66 @@
             {
               "type": "execute_function",
               "text": "Следующий урок",
-              "function_name": "send_video",
-              "params": {
-                "functions": [
-                  {
-                    "function_name": "send_video",
-                    "params": {
-                      "video": {
-                        "id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
-                      },
-                      "keyboard": [
-                        [
-                          {
-                            "type": "execute_function",
-                            "text": "Следующий урок",
-                            "function_name": "send_video",
-                            "params": {
-                              "functions": [
-                                {
-                                  "function_name": "send_video",
-                                  "params": {
-                                    "video": {
-                                      "id": "BAACAgIAAxkBAAIP5WgMrz7SlIMPSFGd0WRXonXuxm3tAALzcAAC7KBhSJxS-qHYS21cNgQ"
-                                    }
-                                  }
-                                },
-                                {
-                                  "function_name": "lessons.update_lesson_progress",
-                                  "params": {
-
-                                  }
-                                }
-                              ]
-                            }
-                          }
-                        ]
-                      ]
-                    }
-                  },
-                  {
-                    "function_name": "lessons.update_lesson_progress",
-                    "params": {
-
-                    }
-                  }
-                ]
-              }
+              "callback_id": "next_lesson_1"
             }
           ]
         ]
       }
     }
-  ]
+  ],
+  "callbacks": {
+    "next_lesson_1": [
+      {
+        "function_name": "send_video",
+        "params": {
+          "video": {
+            "id": "BAACAgIAAxkBAAIPL2gLzrnaofjMsiE-Rq-DCD8_vko0AAILagADTWFIzZvd8ZdBZRE2BA"
+          },
+          "keyboard": [
+            [
+              {
+                "type": "execute_function",
+                "text": "Следующий урок",
+                "callback_id": "next_lesson_2"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        "function_name": "send_text",
+        "params": {
+          "text": "<a href=\"https://forms.yandex.ru/u/680ce93b84227c96b2fa9110/\">Анкета</a>"
+        }
+      },
+      {
+        "function_name": "lessons.update_lesson_progress",
+        "params": {}
+      }
+    ],
+    "next_lesson_2": [
+      {
+        "function_name": "send_video",
+        "params": {
+          "video": {
+            "id": "BAACAgIAAxkBAAIP5WgMrz7SlIMPSFGd0WRXonXuxm3tAALzcAAC7KBhSJxS-qHYS21cNgQ"
+          }
+        }
+      },
+      {
+        "function_name": "lessons.update_lesson_progress",
+        "params": {}
+      },
+      {
+        "function_name": "send_photo",
+        "params": {
+          "photo": {
+            "id": "AgACAgIAAxkBAAIPH2gKist-3A2-AYAfv8bIy9Q_Kg2kAAL49TEbAAFNUUhUDIinFM0RQQEAAwIAA3gAAzYE"
+          },
+          "caption": "<b>Сделать первый шаг в GO разработку</b><br><br>Пять обучающих блоков, доступ в сообщество, записи эфиров и ответы на любые вопросы в чате<br><br><i>Цена - 2.490 рублей | 325 рублей в месяц</i><br><br><b>Доступ выдается навсегда</b>",
+          "keyboard": "start_keyboard"
+        }
+      }
+    ]
+  }
 }

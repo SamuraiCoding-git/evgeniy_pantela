@@ -1,11 +1,13 @@
 import logging
 
+from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InputMediaPhoto, \
-    InputMediaVideo, InputMediaAudio
+    InputMediaVideo, InputMediaAudio, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy.exc import SQLAlchemyError
 
+from tgbot.config import _process_message
 from tgbot.utils.db_utils import get_repo
 from tgbot.utils.media import send_media, build_keyboard
 
@@ -19,8 +21,10 @@ class ScenarioHandler:
         self.state = state
         self.config = config
         self.params = params or {}
+        self.callbacks = {}
 
     async def handle_scenario(self, scenario: dict):
+        self.callbacks = scenario.get("callbacks", {})
         actions = scenario.get("actions", [])
         for action in actions:
             await self.handle_action(action)
@@ -31,6 +35,8 @@ class ScenarioHandler:
 
         if action_type == "execute_function":
             await self.handle_execute_function(params)
+        elif action_type == "send_text":
+            await self.handle_send_text(params)
         elif action_type.startswith("send_"):
             await self.handle_send_media(action_type, params)
         else:
@@ -40,6 +46,24 @@ class ScenarioHandler:
         functions = params.get("functions", [])
         for func in functions:
             await self.execute_function(func.get("function_name"), func.get("params", {}))
+
+    async def handle_send_text(self, params: dict):
+        try:
+            text = params.get("text", "Default Text Message")
+            keyboard_data = params.get("keyboard", [])
+            keyboard = await build_keyboard(keyboard_data, self.state)
+
+            sent_message = await self.message.answer(
+                text=_process_message(text),
+                reply_markup=keyboard,
+                parse_mode=ParseMode.HTML
+            )
+
+            if "update_keyboard" in params:
+                await self.update_keyboard(params["update_keyboard"], sent_message)
+
+        except TelegramBadRequest as e:
+            logger.error(f"Failed to send text message: {e}")
 
     async def handle_send_media(self, media_type: str, params: dict):
         try:
@@ -135,3 +159,36 @@ class ScenarioHandler:
                 "Here is the updated content with new buttons.",
                 reply_markup=new_keyboard
             )
+
+    async def handle_callback(self, callback_id: str):
+        """
+        Обрабатывает callback_id по нажатию на кнопку.
+        После выполнения сценария очищает state.
+        """
+        callback_actions = self.callbacks.get(callback_id)
+        if not callback_actions:
+            logger.warning(f"No callback actions for id {callback_id}")
+            await self.message.answer("Произошла ошибка: действие не найдено.")
+            return
+
+        try:
+            for action in callback_actions:
+                function_name = action.get("function_name")
+                params = action.get("params", {})
+
+                if function_name == "send_text":
+                    await self.handle_send_text(params)
+                elif function_name.startswith("send_"):
+                    await self.handle_send_media(function_name, params)
+                else:
+                    await self.execute_function(function_name, params)
+
+        except Exception as e:
+            logger.error(f"Error while handling callback {callback_id}: {e}")
+            await self.message.answer("Произошла ошибка при обработке нажатия.")
+        finally:
+            try:
+                await self.state.clear()
+                logger.info(f"State cleared after handling callback {callback_id}")
+            except Exception as e:
+                logger.error(f"Failed to clear state: {e}")

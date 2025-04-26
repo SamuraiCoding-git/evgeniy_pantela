@@ -1,10 +1,17 @@
-import re
 from dataclasses import dataclass
 from typing import Optional
 
-from aiogram.utils.markdown import hbold, hlink, hitalic
 from environs import Env
 
+
+def _process_message(message: str) -> str:
+    """
+    Processes HTML message into Telegram-ready text using aiogram markdown functions.
+    """
+
+    message = message.replace('<br>', '\n')
+
+    return message
 
 @dataclass
 class DbConfig:
@@ -129,21 +136,6 @@ class Messages:
     about_course: str
     photo_go_intro: str
     photo_about_course: str
-
-    @staticmethod
-    def _process_message(message: str) -> str:
-        """
-        Processes HTML message into Telegram-ready text using aiogram markdown functions.
-        """
-
-        message = message.replace('<br>', '\n')
-
-        # message = re.sub(r'<b>(.*?)</b>', lambda m: hbold(m.group(1).strip()), message, flags=re.DOTALL)
-        # message = re.sub(r'<i>(.*?)</i>', lambda m: hitalic(m.group(1).strip()), message, flags=re.DOTALL)
-        # message = re.sub(r'<a href="(.*?)">(.*?)</a>', lambda m: hlink(m.group(2).strip(), m.group(1).strip()), message,
-        #                  flags=re.DOTALL)
-
-        return message
 
     @staticmethod
     def from_env(env: Env) -> 'Messages':

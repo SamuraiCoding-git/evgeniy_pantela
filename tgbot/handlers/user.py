@@ -131,28 +131,20 @@ user_router = Router()
 #     scenario_handler = ScenarioHandler(message, state, config)
 #     await scenario_handler.handle_scenario(scenario_json)
 
-@user_router.callback_query(F.data.startswith('execute_function:'))
-async def handle_execute_function(callback_query: CallbackQuery, state: FSMContext, config: Config):
+@user_router.callback_query(F.data.startswith("callback:"))
+async def handle_callback_query(callback: CallbackQuery, state: FSMContext):
+    """
+    Обработка всех нажатий на кнопки, у которых callback_data начинается с "callback:".
+    """
+    callback_id = callback.data.split("callback:", 1)[-1]
+
     data = await state.get_data()
-    callback_data = callback_query.data.split(":", 1)
+    config = data.get("config")
 
-    if len(callback_data) != 2:
-        await callback_query.answer("Invalid callback data format.")
-        return
+    handler = ScenarioHandler(message=callback.message, state=state, config=config)
+    await handler.handle_callback(callback_id)
 
-    unique_id = callback_data[1]
-    functions = data.get(unique_id)
-
-    if not functions:
-        await callback_query.answer("No parameters found for this action.")
-        return
-
-    handler = ScenarioHandler(callback_query.message, state, config)
-
-    for func in functions:
-        function_name = func.get("function_name")
-        function_params = func.get("params", {})
-        await handler.execute_function(function_name, function_params)
+    await callback.answer()
 
 
 @user_router.message(CommandStart(deep_link=True))

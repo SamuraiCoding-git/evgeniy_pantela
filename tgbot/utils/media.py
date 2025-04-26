@@ -1,4 +1,4 @@
-import uuid
+import importlib
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -48,12 +48,17 @@ async def send_media(message, media_type: str, params: dict, state):
         raise ValueError(f"Failed to send {media_type}: {e}")
 
 
-async def build_keyboard(keyboard_data: list, state) -> InlineKeyboardMarkup | None:
-    """
-    Построение инлайн-клавиатуры с поддержкой execute_function через FSMContext.
-    """
+async def build_keyboard(self, keyboard_data) -> InlineKeyboardMarkup | None:
     if not keyboard_data:
         return None
+
+    if isinstance(keyboard_data, str):
+        try:
+            module = importlib.import_module("tgbot.keyboards.inline")
+            ready_keyboard = getattr(module, keyboard_data)
+            return ready_keyboard
+        except (ImportError, AttributeError) as e:
+            raise ValueError(f"Keyboard '{keyboard_data}' not found: {e}")
 
     keyboard = []
     for row in keyboard_data:
@@ -63,28 +68,37 @@ async def build_keyboard(keyboard_data: list, state) -> InlineKeyboardMarkup | N
             text = button.get("text", "Button")
 
             if btn_type == "url":
-                button_row.append(InlineKeyboardButton(
-                    text=text,
-                    url=button.get("url")
-                ))
+                button_row.append(InlineKeyboardButton(text=text, url=button.get("url")))
             elif btn_type == "web_app":
-                button_row.append(InlineKeyboardButton(
-                    text=text,
-                    web_app=WebAppInfo(url=button.get("web_app"))
-                ))
+                button_row.append(InlineKeyboardButton(text=text, web_app=WebAppInfo(url=button.get("web_app"))))
             elif btn_type == "execute_function":
-                unique_id = str(uuid.uuid4())
-                await state.update_data({unique_id: button.get("params", {}).get("functions", [])})
-                button_row.append(InlineKeyboardButton(
-                    text=text,
-                    callback_data=f"execute_function:{unique_id}"
-                ))
-            else:  # обычная callback_data
-                button_row.append(InlineKeyboardButton(
-                    text=text,
-                    callback_data=button.get("callback_data")
-                ))
-
+                callback_id = button.get("callback_id")
+                if not callback_id:
+                    raise ValueError("Button with type 'execute_function' must have 'callback_id'")
+                button_row.append(InlineKeyboardButton(text=text, callback_data=f"callback:{callback_id}"))
+            else:
+                button_row.append(InlineKeyboardButton(text=text, callback_data=button.get("callback_data")))
         keyboard.append(button_row)
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+async def handle_callback(self, callback_id: str):
+    """
+    Обрабатывает callback_id по нажатию на кнопку.
+    """
+    callback_actions = self.callbacks.get(callback_id)
+    if not callback_actions:
+        await self.message.answer("Произошла ошибка: действие не найдено.")
+        return
+
+    for action in callback_actions:
+        function_name = action.get("function_name")
+        params = action.get("params", {})
+
+        if function_name.startswith("send_"):
+            await self.handle_send_media(function_name, params)
+        elif function_name == "send_text":
+            await self.handle_send_text(params)
+        else:
+            await self.execute_function(function_name, params)
