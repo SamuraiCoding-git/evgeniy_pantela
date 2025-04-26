@@ -344,4 +344,5 @@ async def grant_access(message: Message, state: FSMContext, config: Config, bot:
 @admin_router.callback_query(F.data == "admin_back")
 async def admin_back(call: CallbackQuery, state: FSMContext):
     await state.clear()
+    await call.message.delete()
     await call.message.answer("Привет, админ!", reply_markup=admin_keyboard())
