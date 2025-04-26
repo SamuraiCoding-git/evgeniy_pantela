@@ -138,7 +138,7 @@ async def handle_execute_function(callback_query: CallbackQuery, state: FSMConte
     # Split the callback data into parts (we expect 3 parts: execute_function, unique_id, params_data)
     callback_data = callback_query.data.split(":", 2)  # Split into 3 parts: 'execute_function', 'unique_id', 'function_params'
 
-    if len(callback_data) != 3:
+    if len(callback_data) != 2:
         await callback_query.answer("Invalid callback data format.")
         return
 
