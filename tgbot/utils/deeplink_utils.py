@@ -69,7 +69,7 @@ class ScenarioHandler:
 
     async def handle_send_media(self, media_type: str, params: dict):
         try:
-            sent_message = await send_media(self.message, media_type, params, self.state)
+            sent_message = await send_media(self.message, media_type, params)
             if "update_keyboard" in params:
                 await self.update_keyboard(params["update_keyboard"], sent_message)
         except Exception as e:

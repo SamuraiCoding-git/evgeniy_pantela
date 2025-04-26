@@ -11,8 +11,10 @@ from aiogram.types import (
 )
 from aiogram.exceptions import TelegramBadRequest
 
+from tgbot.config import _process_message
 
-async def send_media(message, media_type: str, params: dict, state):
+
+async def send_media(message, media_type: str, params: dict):
     """
     Универсальная отправка медиа и возврат отправленного сообщения для дальнейшего редактирования.
     """
@@ -40,7 +42,7 @@ async def send_media(message, media_type: str, params: dict, state):
 
     media_content = params.get(media_type.split("_")[-1], {})
     file_id_or_url = media_content.get("id") or URLInputFile(media_content.get("url"))
-    caption = params.get("caption")
+    caption = _process_message(params.get("caption"))
     keyboard = await build_keyboard(params.get("keyboard", []))
 
     try:
