@@ -213,6 +213,7 @@ class ScenarioHandler:
         """
         # Save the functions to the context or database using the unique_id
         # Example: Using FSM context to store functions
+        print(unique_id)
         await self.state.update_data({unique_id: functions})
 
     async def update_keyboard(self, update_params, sent_message):
@@ -385,7 +386,7 @@ class VideoHandler(MediaHandler):
         video_url = self.params.get("video", {}).get("url", "")
         video_id = self.params.get("video", {}).get("id", "")
         caption = self.params.get("caption", "")
-        print(self.params)
+        # print(self.params)
 
         # Отправляем видео и сохраняем отправленное сообщение
         self.sent_message = await self.message.answer_video(

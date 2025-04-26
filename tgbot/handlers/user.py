@@ -136,14 +136,12 @@ async def handle_execute_function(callback_query: CallbackQuery, state: FSMConte
 
     callback_data = callback_query.data.split(":", 2)  # Ограничиваем на 3 части: 'params', 'function_name', 'params_data'
 
-    print(len(callback_data))
-
     if len(callback_data) != 2:
         await callback_query.answer("Invalid callback data format.")
         return
 
     # Извлекаем название функции и сериализованные параметры
-    unique_id = callback_data[0]  # Имя функции
+    unique_id = callback_data[1]  # Имя функции
 
     params = data.get(unique_id)
 
