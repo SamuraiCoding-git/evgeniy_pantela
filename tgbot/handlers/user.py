@@ -1,6 +1,7 @@
 import json
 
 from aiogram import Router, F, Bot
+from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
@@ -161,7 +162,9 @@ async def user_deeplink(message: Message, command: CommandObject, state: FSMCont
     user = await repo.users.get_user_by_id(message.from_user.id)
     if not user:
         text = config.messages.offer_agreement
-        await message.answer(text, reply_markup=offer_keyboard())
+        await message.answer(text,
+                             reply_markup=offer_keyboard(),
+                             parse_mode=ParseMode.HTML)
     else:
         deeplink = await repo.deeplink.get_deeplink_by_id(int(command.args))
         scenario_handler = ScenarioHandler(message, state, config)
@@ -178,7 +181,8 @@ async def user_start(message: Message, config: Config):
         await message.answer_photo(
             photo=photo,
             caption=text,
-            reply_markup=start_keyboard())
+            reply_markup=start_keyboard(),
+            parse_mode=ParseMode.HTML)
         return
     text = config.messages.offer_agreement
     await message.answer(text, reply_markup=offer_keyboard())
@@ -338,7 +342,8 @@ async def check_payment_callback(call: CallbackQuery, bot: Bot, config: Config):
             member_limit=1
         )
         await call.message.answer("Ссылка на канал: ",
-                                  reply_markup=enter_keyboard(link.invite_link))
+                                  reply_markup=enter_keyboard(link.invite_link),
+                                  parse_mode=ParseMode.HTML)
 
     else:
         await call.answer("Оплата не прошла", show_alert=True)
@@ -349,11 +354,10 @@ async def about_callback(call: CallbackQuery, config: Config):
     photo = config.messages.photo_go_intro
     text = config.messages.about_course
 
-    print(text)
-
     media = InputMediaPhoto(
         media=photo,
-        caption="\n".join(text),
+        caption=text,
+        parse_mode=ParseMode.HTML
     )
     await call.message.edit_media(
         media=media,
@@ -365,7 +369,8 @@ async def back_callback(call: CallbackQuery, config: Config):
     text = config.messages.course_intro
     media = InputMediaPhoto(
         media=photo,
-        caption="\n".join(text)
+        caption="\n".join(text),
+        parse_mode=ParseMode.HTML
     )
     await call.message.edit_media(
         media=media,
