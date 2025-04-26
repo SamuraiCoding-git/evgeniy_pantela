@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
+from aiogram.utils.markdown import hbold, hlink, hitalic
 from environs import Env
 
 
@@ -129,38 +130,16 @@ class Messages:
     photo_go_intro: str
     photo_about_course: str
 
-    def process(self) -> dict:
-        """
-        Processes all HTML-formatted messages by replacing HTML tags with corresponding methods like
-        hlink, hbold, hitalic, etc.
-
-        :return: A dictionary with processed messages.
-        """
-        processed_messages = {
-            "offer_agreement": self._process_message(self.offer_agreement),
-            "course_intro": self._process_message(self.course_intro),
-            "about_course": self._process_message(self.about_course)
-        }
-
-        return processed_messages
-
     @staticmethod
     def _process_message(message: str) -> str:
         """
-        Helper method to process a single HTML message.
-
-        :param message: The HTML message to process.
-        :return: The processed message.
+        Processes HTML message, using real aiogram formatting functions.
         """
-        # Replace <b> and </b> with hbold
-        message = re.sub(r'<b>(.*?)</b>', r'hbold(\1)', message)
-        # Replace <i> and </i> with hitalic
-        message = re.sub(r'<i>(.*?)</i>', r'hitalic(\1)', message)
-        # Replace <a href="url">text</a> with hlink
-        message = re.sub(r'<a href="(.*?)">(.*?)</a>', r'hlink(\2, \1)', message)
-        # Replace <br> with a newline
+
+        message = re.sub(r'<b>(.*?)</b>', lambda m: hbold(m.group(1)), message, flags=re.DOTALL)
+        message = re.sub(r'<i>(.*?)</i>', lambda m: hitalic(m.group(1)), message, flags=re.DOTALL)
+        message = re.sub(r'<a href="(.*?)">(.*?)</a>', lambda m: hlink(m.group(2), m.group(1)), message, flags=re.DOTALL)
         message = message.replace('<br>', '\n')
-        # Handle other tags like <ul>, <ol>, <li> if necessary
         message = message.replace('<ul>', '').replace('</ul>', '')
         message = message.replace('<ol>', '').replace('</ol>', '')
         message = message.replace('<li>', '- ').replace('</li>', '\n')
